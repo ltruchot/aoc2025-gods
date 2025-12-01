@@ -1,12 +1,17 @@
 /* Day 1 specific styles */
 
-#dial-container {
-  margin: 20px 0;
+section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
-#dial-container svg {
-  width: 500px;
-  height: 500px;
+#dial-container {
+  margin: 20px 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
 }
 
 .controls {
@@ -49,12 +54,4 @@ button.start {
 
 button.start:hover:not(:disabled) {
   background: #15803d;
-}
-
-button.stop {
-  background: #991b1b;
-}
-
-button.stop:hover:not(:disabled) {
-  background: #b91c1c;
 }
