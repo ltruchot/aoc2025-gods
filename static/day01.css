@@ -16,7 +16,6 @@ section {
 
 #dial {
   transform-origin: 450px 450px;
-  transition: transform 500ms ease-out;
 }
 
 .controls {
@@ -59,4 +58,83 @@ button.start {
 
 button.start:hover:not(:disabled) {
   background: #15803d;
+}
+
+button.reset {
+  background: #991b1b;
+}
+
+button.reset:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+/* Speed range slider */
+.speed-control {
+  width: 100%;
+}
+
+.speed-control input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 6px;
+  background: #3f3f46;
+  border-radius: 3px;
+  cursor: pointer;
+  direction: rtl;
+}
+
+.speed-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  background: #a855f7;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.speed-control input[type="range"]::-webkit-slider-thumb:hover {
+  background: #c084fc;
+  transform: scale(1.1);
+}
+
+.speed-control input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  background: #a855f7;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.speed-control input[type="range"]::-moz-range-thumb:hover {
+  background: #c084fc;
+  transform: scale(1.1);
+}
+
+.speed-control input[type="range"]::-moz-range-track {
+  height: 6px;
+  background: #3f3f46;
+  border-radius: 3px;
+}
+
+.speed-control output {
+  font-size: 12px;
+  color: #a1a1aa;
+  white-space: nowrap;
+}
+
+.speed-control .speed-left {
+  min-width: 90px;
+  text-align: right;
+}
+
+.speed-control .speed-right {
+  min-width: 120px;
+  text-align: left;
+  color: #a855f7;
+  font-weight: bold;
 }

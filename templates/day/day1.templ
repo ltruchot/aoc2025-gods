@@ -5,9 +5,13 @@ import "github.com/ltruchot/aoc2025-gods/templates"
 templ Day1() {
 	@templates.LayoutWithCSS("Day 1 - Secret Entrance", "/static/day01.css", "/day/1") {
 		<h2>Day 1: Secret Entrance</h2>
-		<section data-signals="{isAnimating: false, commandQueue: ['L38', 'R10', 'L5'], rotation: 0, status: '', pointedValue: 0}">
+		<section data-signals="{isAnimating: false, commandQueue: 'L38 R38 R10 L5', rotation: 180, status: '', pointedValue: 50, pointedZeros: 0, speed: 500 }">
 			<h3>Part 1</h3>
-			<output id="part1">Loading...</output>
+			<div class="row speed-control">
+				<span>Dial speed</span>
+				<input type="range" min="10" max="1000" data-bind:speed/>
+				<output class="speed-left" data-text="$speed + 'ms'"></output>
+				</div>
 			<div id="dial-container">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" style="width: 100%; max-width: 650px; height: auto;">
 				<defs>
@@ -23,7 +27,7 @@ templ Day1() {
 						<feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.6"></feDropShadow>
 					</filter>
 				</defs>
-				<g id="dial" filter="url(#shadow)" data-attr:style="'transform: rotate(' + $rotation + 'deg)'">
+				<g id="dial" filter="url(#shadow)" data-attr:style="`transform: rotate(${$rotation}deg); transition: transform ${$speed}ms ease-out`">
 					<circle cx="450" cy="450" r="395" fill="#3f3f46"></circle>
 					<circle cx="450" cy="450" r="375" fill="url(#dialGrad)"></circle>
 					@dialTicks()
@@ -36,21 +40,26 @@ templ Day1() {
 			<div class="controls">
 				<div class="row">
 					<span class="label">Pointed value:</span>
-					<output data-text="$pointedValue">0</output>
+					<output data-text="$pointedValue"></output>
+					<span class="label">Pointed zeros:</span>
+					<output data-text="$pointedZeros"></output>
 				</div>
 				<div class="row">
 					<span class="label">Commands:</span>
 				</div>
-				<textarea id="commands" 
-					data-attr:disabled="$isAnimating"  
-					placeholder='["L38", "R10", "L123"]' 
-					data-text="JSON.stringify($commandQueue)">["L38", "R10", "L5"]</textarea>
+				<textarea id="commands"
+					data-attr:disabled="$isAnimating"
+					placeholder="L38 R10 L123"
+					data-bind:command-queue></textarea>
+
+
+
 				<div class="row">
 					<button class="start"
 						data-attr:disabled="$isAnimating"
 						data-on:click="
 							$isAnimating = true;
-							const commands = parseCommands([...$commandQueue]);
+							const commands = parseCommands($commandQueue);
 							if (commands.length === 0) {
 								$status = 'No valid commands';
 								$isAnimating = false;
@@ -59,7 +68,8 @@ templ Day1() {
 									$status = `Command ${index + 1}/${commands.length}: ${cmd.direction === 1 ? 'Left' : 'Right'} ${cmd.steps}`;
 									$rotation = rot + stepsToDegrees(cmd.steps, cmd.direction);
 									$pointedValue = wrapValue($pointedValue, cmd.steps, cmd.direction);
-									await delay(800);
+									if ($pointedValue === 0) { $pointedZeros = $pointedZeros + 1; }
+									await delay($speed/2 + $speed);
 									return $rotation;
 								}), Promise.resolve($rotation)).then(() => {
 									$status = 'Sequence complete';
@@ -72,20 +82,28 @@ templ Day1() {
 						">
 						Run safe dial commands
 					</button>
+					<button class="reset"
+						data-attr:disabled="$isAnimating"
+						data-on:click="$rotation = 180; $pointedValue = 50; $pointedZeros = 0; $status = ''; $commandQueue = ''">
+						Reset
+					</button>
 				</div>
 				<div id="status" data-text="$status"></div>
 			</div>
 		</section>
+		
 		<section>
 			<h3>Part 2</h3>
-			<output id="part2">Loading...</output>
+			<output id="part2">TBD...</output>
 		</section>
-		<script>
-			// DOM
-			const part1Output = document.getElementById('part1');
-			const part2Output = document.getElementById('part2');
 
-			// Parse command
+		<script>
+
+			// Parse commands list (split by whitespace)
+			function parseCommands(str) {
+				return str.trim().split(/\s+/).map(parseCommand).filter(c => c !== null);
+			}
+
 			function parseCommand(cmd) {
 				const trimmed = cmd.trim().toUpperCase();
 				const match = trimmed.match(/^([LR])(\d+)$/);
@@ -93,11 +111,7 @@ templ Day1() {
 				return { direction: match[1] === 'L' ? 1 : -1, steps: parseInt(match[2], 10) };
 			}
 
-			// Parse commands list
-			function parseCommands(arr) {
-				return arr.filter(s => typeof s === 'string').map(parseCommand).filter(c => c !== null);
-			}
-
+			// Promisified timeout
 			function delay(ms) {
 				return new Promise(resolve => setTimeout(resolve, ms));
 			}
@@ -112,28 +126,6 @@ templ Day1() {
 				return ((current - steps * direction) % 100 + 100) % 100;
 			}
 
-			// Solve puzzle
-			/*
-			async function solve() {
-				const res = await fetch('/adventofcode/2025/day/1/input');
-				const input = await res.text();
-				part1Output.textContent = solvePart1(input);
-				part2Output.textContent = solvePart2(input);
-			}
-
-			function solvePart1(input) {
-				// TODO: implement Day 1 Part 1
-				return "Not solved yet";
-			}
-
-			function solvePart2(input) {
-				// TODO: implement Day 1 Part 2
-				return "Not solved yet";
-			}
-	
-
-			solve();
-					*/
 		</script>
 	}
 }
