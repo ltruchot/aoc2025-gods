@@ -64,7 +64,6 @@ templ Day1() {
 			const state = {
 				rotation: 0,
 				currentCommandIndex: 0,
-				animationId: null,
 				dialElement: null
 			};
 
@@ -101,33 +100,15 @@ templ Day1() {
 				return arr.filter(s => typeof s === 'string').map(parseCommand).filter(c => c !== null);
 			}
 
-			// Easing
-			function easeOutCubic(t) {
-				return 1 - Math.pow(1 - t, 3);
-			}
-
-			// Animation
+			// Animation (CSS transition handles the easing)
 			function animateTo(targetRotation) {
 				return new Promise((resolve) => {
-					const startRotation = state.rotation;
-					const delta = targetRotation - startRotation;
-					const duration = 500;
-					const startTime = performance.now();
-
-					function animate(currentTime) {
-						const elapsed = currentTime - startTime;
-						const progress = Math.min(elapsed / duration, 1);
-						state.rotation = startRotation + delta * easeOutCubic(progress);
-						updateDisplay();
-						if (progress < 1) {
-							state.animationId = requestAnimationFrame(animate);
-						} else {
-							state.rotation = targetRotation;
-							updateDisplay();
-							resolve();
-						}
-					}
-					state.animationId = requestAnimationFrame(animate);
+					state.rotation = targetRotation;
+					state.dialElement.setAttribute('transform', `rotate(${targetRotation} 450 450)`);
+					state.dialElement.addEventListener('transitionend', () => {
+						pointedValueInput.value = calculatePointedValue(state.rotation);
+						resolve();
+					}, { once: true });
 				});
 			}
 
