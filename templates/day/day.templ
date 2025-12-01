@@ -1,0 +1,21 @@
+package day
+
+import "fmt"
+import "github.com/ltruchot/aoc2025-gods/templates"
+
+templ Day(dayNum int) {
+	@templates.Layout(fmt.Sprintf("Day %d", dayNum), fmt.Sprintf("/day/%d", dayNum)) {
+		<h2>Day { fmt.Sprintf("%d", dayNum) }</h2>
+		<div id="app" data-day={ fmt.Sprintf("%d", dayNum) } data-signals="{part1Output: 'Loading...', part2Output: 'Loading...'}">
+			<section>
+				<h3>Part 1</h3>
+				<output id="part1" data-text="$part1Output"></output>
+			</section>
+			<section>
+				<h3>Part 2</h3>
+				<output id="part2" data-text="$part2Output"></output>
+			</section>
+		</div>
+		<script type="module" src={ fmt.Sprintf("/static/day%02d.js", dayNum) }></script>
+	}
+}
