@@ -15,6 +15,7 @@ section {
 }
 
 #dial {
+  transform-origin: 450px 450px;
   transition: transform 500ms ease-out;
 }
 

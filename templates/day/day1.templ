@@ -5,7 +5,7 @@ import "github.com/ltruchot/aoc2025-gods/templates"
 templ Day1() {
 	@templates.LayoutWithCSS("Day 1 - Secret Entrance", "/static/day01.css", "/day/1") {
 		<h2>Day 1: Secret Entrance</h2>
-		<section data-signals="{isAnimating: false, commandQueue: ['L38', 'R10', 'L5']}">
+		<section data-signals="{isAnimating: false, commandQueue: ['L38', 'R10', 'L5'], rotation: 0}">
 			<h3>Part 1</h3>
 			<output id="part1">Loading...</output>
 			<div id="dial-container">
@@ -23,7 +23,7 @@ templ Day1() {
 						<feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.6"></feDropShadow>
 					</filter>
 				</defs>
-				<g id="dial" transform="rotate(0 450 450)" filter="url(#shadow)">
+				<g id="dial" filter="url(#shadow)">
 					<circle cx="450" cy="450" r="395" fill="#3f3f46"></circle>
 					<circle cx="450" cy="450" r="375" fill="url(#dialGrad)"></circle>
 					@dialTicks()
@@ -46,9 +46,9 @@ templ Day1() {
 					placeholder='["L38", "R10", "L123"]' 
 					data-text="JSON.stringify($commandQueue)">["L38", "R10", "L5"]</textarea>
 				<div class="row">
-					<button class="start" 
-						data-attr:disabled="$isAnimating" 
-						data-on:click="$isAnimating = true; runSafeDialCommands($commandQueue).then(() => $isAnimating = false);">
+					<button class="start"
+						data-attr:disabled="$isAnimating"
+						data-on:click="$isAnimating = true; runSafeDialCommands($commandQueue, $rotation).then((finalRotation) => { $rotation = finalRotation; $isAnimating = false; });">
 						Run safe dial commands
 					</button>
 				</div>
@@ -60,14 +60,8 @@ templ Day1() {
 			<output id="part2">Loading...</output>
 		</section>
 		<script>
-			// State
-			const state = {
-				rotation: 0,
-				currentCommandIndex: 0,
-				dialElement: null
-			};
-
 			// DOM
+			const dialElement = document.getElementById('dial');
 			const pointedValueInput = document.getElementById('pointed-value');
 			const statusEl = document.getElementById('status');
 			const part1Output = document.getElementById('part1');
@@ -80,11 +74,9 @@ templ Day1() {
 			}
 
 			// Update display
-			function updateDisplay() {
-				if (state.dialElement) {
-					state.dialElement.setAttribute('transform', `rotate(${state.rotation} 450 450)`);
-				}
-				pointedValueInput.value = calculatePointedValue(state.rotation);
+			function updateDisplay(rotation) {
+				dialElement.style.transform = `rotate(${rotation}deg)`;
+				pointedValueInput.value = calculatePointedValue(rotation);
 			}
 
 			// Parse command
@@ -103,10 +95,9 @@ templ Day1() {
 			// Animation (CSS transition handles the easing)
 			function animateTo(targetRotation) {
 				return new Promise((resolve) => {
-					state.rotation = targetRotation;
-					state.dialElement.setAttribute('transform', `rotate(${targetRotation} 450 450)`);
-					state.dialElement.addEventListener('transitionend', () => {
-						pointedValueInput.value = calculatePointedValue(state.rotation);
+					dialElement.style.transform = `rotate(${targetRotation}deg)`;
+					dialElement.addEventListener('transitionend', () => {
+						pointedValueInput.value = calculatePointedValue(targetRotation);
 						resolve();
 					}, { once: true });
 				});
@@ -117,34 +108,32 @@ templ Day1() {
 			}
 
 			// Execute next command
-			async function executeNextCommand(commandQueue) {
-				if (state.currentCommandIndex >= commandQueue.length) {
+			async function executeNextCommand(commandQueue, currentRotation, index = 0) {
+				if (index >= commandQueue.length) {
 					statusEl.textContent = 'Sequence complete';
-					return;
+					return currentRotation;
 				}
-				const cmd = commandQueue[state.currentCommandIndex];
+				const cmd = commandQueue[index];
 				const degrees = (cmd.steps / 100) * 360 * cmd.direction;
 				const dirLabel = cmd.direction === 1 ? 'Left' : 'Right';
-				statusEl.textContent = `Command ${state.currentCommandIndex + 1}/${commandQueue.length}: ${dirLabel} ${cmd.steps}`;
-				await animateTo(state.rotation + degrees);
-				state.currentCommandIndex++;
+				statusEl.textContent = `Command ${index + 1}/${commandQueue.length}: ${dirLabel} ${cmd.steps}`;
+				const newRotation = currentRotation + degrees;
+				await animateTo(newRotation);
 				await delay(300);
-				await executeNextCommand(commandQueue);
+				return await executeNextCommand(commandQueue, newRotation, index + 1);
 			}
 
-			async function runSafeDialCommands(commandQueue) {
+			async function runSafeDialCommands(commandQueue, rotation) {
 				const commands = parseCommands([...commandQueue]);
 				if (commands.length === 0) {
 					statusEl.textContent = 'No valid commands';
-					return;
+					return rotation;
 				}
-				state.currentCommandIndex = 0;
-				return await executeNextCommand(commands);
+				return await executeNextCommand(commands, rotation);
 			}
 
 			// Initialize
-			state.dialElement = document.getElementById('dial');
-			updateDisplay();
+			updateDisplay(0);
 
 			// Solve puzzle
 			async function solve() {
