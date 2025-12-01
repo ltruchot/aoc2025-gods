@@ -3,7 +3,7 @@ services:
     name: aoc2025-datastar
     runtime: go
     plan: starter
-    buildCommand: make build
+    buildCommand: go install github.com/a-h/templ/cmd/templ@latest && make build
     startCommand: ./bin/server
     healthCheckPath: /
     envVars:
