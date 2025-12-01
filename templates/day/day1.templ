@@ -5,7 +5,7 @@ import "github.com/ltruchot/aoc2025-gods/templates"
 templ Day1() {
 	@templates.LayoutWithCSS("Day 1 - Secret Entrance", "/static/day01.css", "/day/1") {
 		<h2>Day 1: Secret Entrance</h2>
-		<section data-signals="{isAnimating: false, commandQueue: ['L38', 'R10', 'L5'], rotation: 0}">
+		<section data-signals="{isAnimating: false, commandQueue: ['L38', 'R10', 'L5'], rotation: 0, status: '', pointedValue: 0}">
 			<h3>Part 1</h3>
 			<output id="part1">Loading...</output>
 			<div id="dial-container">
@@ -23,7 +23,7 @@ templ Day1() {
 						<feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.6"></feDropShadow>
 					</filter>
 				</defs>
-				<g id="dial" filter="url(#shadow)">
+				<g id="dial" filter="url(#shadow)" data-attr:style="'transform: rotate(' + $rotation + 'deg)'">
 					<circle cx="450" cy="450" r="395" fill="#3f3f46"></circle>
 					<circle cx="450" cy="450" r="375" fill="url(#dialGrad)"></circle>
 					@dialTicks()
@@ -36,7 +36,7 @@ templ Day1() {
 			<div class="controls">
 				<div class="row">
 					<span class="label">Pointed value:</span>
-					<input type="text" id="pointed-value" value="0" disabled style="width: 80px;"/>
+					<output data-text="$pointedValue">0</output>
 				</div>
 				<div class="row">
 					<span class="label">Commands:</span>
@@ -48,11 +48,32 @@ templ Day1() {
 				<div class="row">
 					<button class="start"
 						data-attr:disabled="$isAnimating"
-						data-on:click="$isAnimating = true; runSafeDialCommands($commandQueue, $rotation).then((finalRotation) => { $rotation = finalRotation; $isAnimating = false; });">
+						data-on:click="
+							$isAnimating = true;
+							const commands = parseCommands([...$commandQueue]);
+							if (commands.length === 0) {
+								$status = 'No valid commands';
+								$isAnimating = false;
+							} else {
+								commands.reduce((promise, cmd, index) => promise.then(async (rot) => {
+									$status = `Command ${index + 1}/${commands.length}: ${cmd.direction === 1 ? 'Left' : 'Right'} ${cmd.steps}`;
+									$rotation = rot + stepsToDegrees(cmd.steps, cmd.direction);
+									$pointedValue = wrapValue($pointedValue, cmd.steps, cmd.direction);
+									await delay(800);
+									return $rotation;
+								}), Promise.resolve($rotation)).then(() => {
+									$status = 'Sequence complete';
+								}).catch(() => {
+									$status = 'Sequence interrupted';
+								}).finally(() => {
+									$isAnimating = false;
+								});
+							}
+						">
 						Run safe dial commands
 					</button>
 				</div>
-				<div id="status"></div>
+				<div id="status" data-text="$status"></div>
 			</div>
 		</section>
 		<section>
@@ -61,23 +82,8 @@ templ Day1() {
 		</section>
 		<script>
 			// DOM
-			const dialElement = document.getElementById('dial');
-			const pointedValueInput = document.getElementById('pointed-value');
-			const statusEl = document.getElementById('status');
 			const part1Output = document.getElementById('part1');
 			const part2Output = document.getElementById('part2');
-
-			// Calculate pointed value
-			function calculatePointedValue(rotation) {
-				const normalized = ((rotation % 360) + 360) % 360;
-				return (100 - Math.round(normalized / 3.6) % 100) % 100;
-			}
-
-			// Update display
-			function updateDisplay(rotation) {
-				dialElement.style.transform = `rotate(${rotation}deg)`;
-				pointedValueInput.value = calculatePointedValue(rotation);
-			}
 
 			// Parse command
 			function parseCommand(cmd) {
@@ -92,50 +98,22 @@ templ Day1() {
 				return arr.filter(s => typeof s === 'string').map(parseCommand).filter(c => c !== null);
 			}
 
-			// Animation (CSS transition handles the easing)
-			function animateTo(targetRotation) {
-				return new Promise((resolve) => {
-					dialElement.style.transform = `rotate(${targetRotation}deg)`;
-					dialElement.addEventListener('transitionend', () => {
-						pointedValueInput.value = calculatePointedValue(targetRotation);
-						resolve();
-					}, { once: true });
-				});
-			}
-
 			function delay(ms) {
 				return new Promise(resolve => setTimeout(resolve, ms));
 			}
 
-			// Execute next command
-			async function executeNextCommand(commandQueue, currentRotation, index = 0) {
-				if (index >= commandQueue.length) {
-					statusEl.textContent = 'Sequence complete';
-					return currentRotation;
-				}
-				const cmd = commandQueue[index];
-				const degrees = (cmd.steps / 100) * 360 * cmd.direction;
-				const dirLabel = cmd.direction === 1 ? 'Left' : 'Right';
-				statusEl.textContent = `Command ${index + 1}/${commandQueue.length}: ${dirLabel} ${cmd.steps}`;
-				const newRotation = currentRotation + degrees;
-				await animateTo(newRotation);
-				await delay(300);
-				return await executeNextCommand(commandQueue, newRotation, index + 1);
+			// Convert steps to degrees
+			function stepsToDegrees(steps, direction) {
+				return (steps / 100) * 360 * direction;
 			}
 
-			async function runSafeDialCommands(commandQueue, rotation) {
-				const commands = parseCommands([...commandQueue]);
-				if (commands.length === 0) {
-					statusEl.textContent = 'No valid commands';
-					return rotation;
-				}
-				return await executeNextCommand(commands, rotation);
+			// Wrap value between 0-99
+			function wrapValue(current, steps, direction) {
+				return ((current - steps * direction) % 100 + 100) % 100;
 			}
-
-			// Initialize
-			updateDisplay(0);
 
 			// Solve puzzle
+			/*
 			async function solve() {
 				const res = await fetch('/adventofcode/2025/day/1/input');
 				const input = await res.text();
@@ -152,8 +130,10 @@ templ Day1() {
 				// TODO: implement Day 1 Part 2
 				return "Not solved yet";
 			}
+	
 
 			solve();
+					*/
 		</script>
 	}
 }
