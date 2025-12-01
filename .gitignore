@@ -30,3 +30,6 @@ Thumbs.db
 # Logs
 *.log
 build-errors.log
+
+# Claude Code
+.claude/
