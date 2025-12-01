@@ -11,31 +11,31 @@ templ Day1() {
 				<span>Dial speed</span>
 				<input type="range" min="10" max="1000" data-bind:speed/>
 				<output class="speed-left" data-text="$speed + 'ms'"></output>
-				</div>
+			</div>
 			<div id="dial-container">
-			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" style="width: 100%; max-width: 650px; height: auto;">
-				<defs>
-					<radialGradient id="dialGrad" cx="30%" cy="30%">
-						<stop offset="0%" stop-color="#52525b"></stop>
-						<stop offset="100%" stop-color="#18181b"></stop>
-					</radialGradient>
-					<radialGradient id="centerGrad" cx="30%" cy="30%">
-						<stop offset="0%" stop-color="#71717a"></stop>
-						<stop offset="100%" stop-color="#27272a"></stop>
-					</radialGradient>
-					<filter id="shadow">
-						<feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.6"></feDropShadow>
-					</filter>
-				</defs>
-				<g id="dial" filter="url(#shadow)" data-attr:style="`transform: rotate(${$rotation}deg); transition: transform ${$speed}ms ease-out`">
-					<circle cx="450" cy="450" r="395" fill="#3f3f46"></circle>
-					<circle cx="450" cy="450" r="375" fill="url(#dialGrad)"></circle>
-					@dialTicks()
-					<circle cx="450" cy="450" r="135" fill="url(#centerGrad)" stroke="#52525b" stroke-width="5"></circle>
-					<circle cx="450" cy="450" r="75" fill="#27272a" stroke="#3f3f46" stroke-width="4"></circle>
-				</g>
-				<polygon points="450,50 432,10 468,10" fill="#dc2626"></polygon>
-			</svg>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" style="width: 100%; max-width: 650px; height: auto;">
+					<defs>
+						<radialGradient id="dialGrad" cx="30%" cy="30%">
+							<stop offset="0%" stop-color="#52525b"></stop>
+							<stop offset="100%" stop-color="#18181b"></stop>
+						</radialGradient>
+						<radialGradient id="centerGrad" cx="30%" cy="30%">
+							<stop offset="0%" stop-color="#71717a"></stop>
+							<stop offset="100%" stop-color="#27272a"></stop>
+						</radialGradient>
+						<filter id="shadow">
+							<feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.6"></feDropShadow>
+						</filter>
+					</defs>
+					<g id="dial" filter="url(#shadow)" data-attr:style="`transform: rotate(${$rotation}deg); transition: transform ${$speed}ms ease-out`">
+						<circle cx="450" cy="450" r="395" fill="#3f3f46"></circle>
+						<circle cx="450" cy="450" r="375" fill="url(#dialGrad)"></circle>
+						@dialTicks()
+						<circle cx="450" cy="450" r="135" fill="url(#centerGrad)" stroke="#52525b" stroke-width="5"></circle>
+						<circle cx="450" cy="450" r="75" fill="#27272a" stroke="#3f3f46" stroke-width="4"></circle>
+					</g>
+					<polygon points="450,50 432,10 468,10" fill="#dc2626"></polygon>
+				</svg>
 			</div>
 			<div class="controls">
 				<div class="row">
@@ -47,15 +47,15 @@ templ Day1() {
 				<div class="row">
 					<span class="label">Commands:</span>
 				</div>
-				<textarea id="commands"
+				<textarea
+					id="commands"
 					data-attr:disabled="$isAnimating"
 					placeholder="L38 R10 L123"
-					data-bind:command-queue></textarea>
-
-
-
+					data-bind:command-queue
+				></textarea>
 				<div class="row">
-					<button class="start"
+					<button
+						class="start"
 						data-attr:disabled="$isAnimating"
 						data-on:click="
 							$isAnimating = true;
@@ -79,53 +79,52 @@ templ Day1() {
 									$isAnimating = false;
 								});
 							}
-						">
+						"
+					>
 						Run safe dial commands
 					</button>
-					<button class="reset"
+					<button
+						class="reset"
 						data-attr:disabled="$isAnimating"
-						data-on:click="$rotation = 180; $pointedValue = 50; $pointedZeros = 0; $status = ''; $commandQueue = ''">
+						data-on:click="$rotation = 180; $pointedValue = 50; $pointedZeros = 0; $status = ''; $commandQueue = ''"
+					>
 						Reset
 					</button>
 				</div>
 				<div id="status" data-text="$status"></div>
 			</div>
 		</section>
-		
 		<section>
 			<h3>Part 2</h3>
 			<output id="part2">TBD...</output>
 		</section>
-
+		<script src="https://cdn.jsdelivr.net/npm/ramda@0.32.0/dist/ramda.min.js"></script>
 		<script>
+			const { pipe, trim, split, map, filter, toUpper, match, ifElse, always, multiply, add, modulo } = R;
 
-			// Parse commands list (split by whitespace)
-			function parseCommands(str) {
-				return str.trim().split(/\s+/).map(parseCommand).filter(c => c !== null);
-			}
+			// Parse single command: "L38" -> { direction: 1, steps: 38 }
+			const parseCommand = pipe(
+				trim,
+				toUpper,
+				match(/^([LR])(\d+)$/),
+				ifElse(
+					Boolean,
+					([, dir, steps]) => ({ direction: dir === 'L' ? 1 : -1, steps: parseInt(steps, 10) }),
+					always(null)
+				)
+			);
 
-			function parseCommand(cmd) {
-				const trimmed = cmd.trim().toUpperCase();
-				const match = trimmed.match(/^([LR])(\d+)$/);
-				if (!match) return null;
-				return { direction: match[1] === 'L' ? 1 : -1, steps: parseInt(match[2], 10) };
-			}
+			// Parse commands list: "L38 R10" -> [{ direction: 1, steps: 38 }, ...]
+			const parseCommands = pipe(trim, split(/\s+/), map(parseCommand), filter(Boolean));
 
-			// Promisified timeout
-			function delay(ms) {
-				return new Promise(resolve => setTimeout(resolve, ms));
-			}
-
-			// Convert steps to degrees
-			function stepsToDegrees(steps, direction) {
-				return (steps / 100) * 360 * direction;
-			}
+			// Steps to degrees: 38 steps * direction -> 136.8 degrees
+			const stepsToDegrees = (steps, direction) => steps * 3.6 * direction;
 
 			// Wrap value between 0-99
-			function wrapValue(current, steps, direction) {
-				return ((current - steps * direction) % 100 + 100) % 100;
-			}
+			const wrapValue = (current, steps, direction) => ((current - steps * direction) % 100 + 100) % 100;
 
+			// Promisified timeout
+			const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 		</script>
 	}
 }

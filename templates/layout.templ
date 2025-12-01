@@ -62,7 +62,7 @@ templ LayoutWithCSS(title string, css string, currentPath string) {
 				<nav>
 					<a href="/" class={ templ.KV("active", currentPath == "/") }>Home</a>
 					for i := 1; i <= 12; i++ {
-						<a href={ templ.URL("/day/" + strconv.Itoa(i)) } class={ templ.KV("active", currentPath == "/day/" + strconv.Itoa(i)) }>{ strconv.Itoa(i) }</a>
+						<a href={ templ.URL("/day/" + strconv.Itoa(i)) } class={ templ.KV("active", currentPath == "/day/"+strconv.Itoa(i)) }>{ strconv.Itoa(i) }</a>
 					}
 				</nav>
 			</header>
