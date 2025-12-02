@@ -5,7 +5,7 @@ import "github.com/ltruchot/aoc2025-gods/templates"
 templ Day1() {
 	@templates.LayoutWithCSS("Day 1 - Secret Entrance", "/static/day01.css", "/day/1") {
 		<h2>Day 1: Secret Entrance</h2>
-		<section data-signals="{isAnimating: false, commandQueue: 'L50 R38 R10 L5', rotation: 180, status: '', pointedValue: 50, pointedZeros: 0, speed: 500 }">
+		<section data-signals="{isAnimating: false, commandQueue: 'L50 R38 R10 L5', rotation: 180, status: '', pointedValue: 50, pointedZeros: 0, speed: 515 }">
 			<h3>Part 1</h3>
 			<div class="row speed-control">
 				<span>Dial speed</span>
@@ -85,7 +85,7 @@ templ Day1() {
 					<button
 						class="reset"
 						data-attr:disabled="$isAnimating"
-						data-on:click="$rotation = 180; $pointedValue = 50; $pointedZeros = 0; $status = ''; $commandQueue = ''"
+						data-on:click="$rotation = 180; $pointedValue = 50; $pointedZeros = 0; $status = ''; $commandQueue = '', $speed = 515"
 					>
 						Reset
 					</button>

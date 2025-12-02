@@ -1,4 +1,12 @@
 /* Day 1 specific styles */
+h2 {
+  margin-bottom: 4px;
+}
+
+h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
 
 section {
   display: flex;
@@ -7,16 +15,7 @@ section {
   text-align: center;
 }
 
-section h2 {
-  margin-bottom: 4px;
-}
-
-section h3 {
-  margin-top: 0;
-  margin-bottom: 8px;
-}
-
-#dial-container {
+section #dial-container {
   margin: 8px 0;
   width: 100%;
   display: flex;
