@@ -5,7 +5,7 @@ import "github.com/ltruchot/aoc2025-gods/templates"
 templ Day1() {
 	@templates.LayoutWithCSS("Day 1 - Secret Entrance", "/static/day01.css", "/day/1") {
 		<h2>Day 1: Secret Entrance</h2>
-		<section data-signals="{isAnimating: false, commandQueue: 'L38 R38 R10 L5', rotation: 180, status: '', pointedValue: 50, pointedZeros: 0, speed: 500 }">
+		<section data-signals="{isAnimating: false, commandQueue: 'L50 R38 R10 L5', rotation: 180, status: '', pointedValue: 50, pointedZeros: 0, speed: 500 }">
 			<h3>Part 1</h3>
 			<div class="row speed-control">
 				<span>Dial speed</span>
@@ -60,25 +60,24 @@ templ Day1() {
 						data-on:click="
 							$isAnimating = true;
 							const commands = parseCommands($commandQueue);
-							if (commands.length === 0) {
-								$status = 'No valid commands';
+
+							commands.reduce((promise, cmd, index) => promise.then(async (rot) => {
+								$status = `Command ${index + 1}/${commands.length}: ${cmd.direction === 1 ? 'Left' : 'Right'} ${cmd.steps}`;
+								$rotation = rot + stepsToDegrees(cmd.steps, cmd.direction);
+								$pointedValue = wrapValue($pointedValue, cmd.steps, cmd.direction);
+								if ($pointedValue === 0) { $pointedZeros = $pointedZeros + 1; }
+								await delay($speed/2 + $speed);
+								return $rotation;
+							}), Promise.resolve().then(() => {
+								if (commands.length === 0) throw new Error('No valid commands');
+								return $rotation;
+							})).then(() => {
+								$status = 'Sequence complete';
+							}).catch(e => {
+								$status = e.message;
+							}).finally(() => {
 								$isAnimating = false;
-							} else {
-								commands.reduce((promise, cmd, index) => promise.then(async (rot) => {
-									$status = `Command ${index + 1}/${commands.length}: ${cmd.direction === 1 ? 'Left' : 'Right'} ${cmd.steps}`;
-									$rotation = rot + stepsToDegrees(cmd.steps, cmd.direction);
-									$pointedValue = wrapValue($pointedValue, cmd.steps, cmd.direction);
-									if ($pointedValue === 0) { $pointedZeros = $pointedZeros + 1; }
-									await delay($speed/2 + $speed);
-									return $rotation;
-								}), Promise.resolve($rotation)).then(() => {
-									$status = 'Sequence complete';
-								}).catch(() => {
-									$status = 'Sequence interrupted';
-								}).finally(() => {
-									$isAnimating = false;
-								});
-							}
+							});
 						"
 					>
 						Run safe dial commands
@@ -100,7 +99,7 @@ templ Day1() {
 		</section>
 		<script src="https://cdn.jsdelivr.net/npm/ramda@0.32.0/dist/ramda.min.js"></script>
 		<script>
-			const { pipe, trim, split, map, filter, toUpper, match, ifElse, always, multiply, add, modulo } = R;
+			const { pipe, trim, split, map, filter, toUpper, match, ifElse, always, isEmpty, not } = R;
 
 			// Parse single command: "L38" -> { direction: 1, steps: 38 }
 			const parseCommand = pipe(
@@ -108,7 +107,7 @@ templ Day1() {
 				toUpper,
 				match(/^([LR])(\d+)$/),
 				ifElse(
-					Boolean,
+					pipe(isEmpty, not),
 					([, dir, steps]) => ({ direction: dir === 'L' ? 1 : -1, steps: parseInt(steps, 10) }),
 					always(null)
 				)
