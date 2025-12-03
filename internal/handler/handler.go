@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/ltruchot/aoc2025-gods/templates"
 	"github.com/ltruchot/aoc2025-gods/templates/day"
@@ -21,7 +22,9 @@ func (h *Handler) setCache(w http.ResponseWriter, r *http.Request) bool {
 	w.Header().Set("ETag", etag)
 	w.Header().Set("Cache-Control", "no-cache")
 
-	if r.Header.Get("If-None-Match") == etag {
+	// Handle both strong and weak validators (W/"...")
+	ifNoneMatch := r.Header.Get("If-None-Match")
+	if ifNoneMatch == etag || ifNoneMatch == "W/"+etag || strings.Contains(ifNoneMatch, etag) {
 		w.WriteHeader(http.StatusNotModified)
 		return true
 	}
