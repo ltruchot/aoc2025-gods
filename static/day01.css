@@ -54,6 +54,21 @@ section #dial-container {
   justify-content: center;
 }
 
+.row.stats {
+  gap: 8px;
+}
+
+.row.stats output {
+  min-width: 50px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.row.stats output.small {
+  min-width: 32px;
+  padding: 8px;
+}
+
 .label {
   color: #a1a1aa;
   font-size: 14px;
@@ -62,7 +77,37 @@ section #dial-container {
 #status {
   color: #a1a1aa;
   font-size: 14px;
-  min-height: 20px;
+}
+
+#status:empty {
+  display: none;
+}
+
+.hint {
+  width: 100%;
+  max-width: 500px;
+  margin: 8px 0 0;
+  padding: 16px 20px;
+  border-left: 3px solid var(--violet-500);
+  background: rgba(139, 92, 246, 0.08);
+  border-radius: 0 8px 8px 0;
+  font-style: italic;
+  color: var(--zinc-400);
+  font-size: 13px;
+  text-align: left;
+}
+
+.hint p {
+  margin: 0 0 8px;
+}
+
+.hint p:last-child {
+  margin-bottom: 0;
+}
+
+.hint strong {
+  color: var(--violet-300);
+  font-style: normal;
 }
 
 .controls textarea {
@@ -91,6 +136,7 @@ button.reset:hover:not(:disabled) {
 /* Speed range slider */
 .speed-control {
   width: 100%;
+  max-width: 500px;
 }
 
 .speed-control input[type="range"] {

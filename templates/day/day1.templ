@@ -50,12 +50,12 @@ templ Day1() {
 					placeholder="L38 R10 L123"
 					data-bind:command-queue
 				></textarea>
-				<div class="row">
-					<span class="label">Pointed value:</span>
-					<output data-text="$pointedValue"></output>
-					<span class="label">Pointed zeros:</span>
+				<div class="row stats">
+					<span class="label">Value:</span>
+					<output class="small" data-text="$pointedValue"></output>
+					<span class="label">Part 1:</span>
 					<output data-text="$pointedZeros"></output>
-					<span class="label">Clicked zeros:</span>
+					<span class="label">Part 2:</span>
 					<output data-text="$clickedZeros"></output>
 				</div>
 				<!-- Main button to run the all commands in the queue, through Datastar expressions -->
@@ -96,6 +96,11 @@ templ Day1() {
 				</div>
 				<div id="status" data-text="$status"></div>
 			</div>
+			<blockquote class="hint">
+				<p>To open the secret entrance, rotate the dial following a precise sequence of commands.</p>
+				<p><strong>Part 1:</strong> Count how many times the dial lands on zero at the end of a rotation.</p>
+				<p><strong>Part 2:</strong> Count every time the dial points at zero, including during rotations.</p>
+			</blockquote>
 		</section>
 		<script src="https://cdn.jsdelivr.net/npm/ramda@0.32.0/dist/ramda.min.js"></script>
 		<script>
