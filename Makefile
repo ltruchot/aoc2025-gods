@@ -1,5 +1,8 @@
 .PHONY: serve build test lint generate clean install dev install-browsers
 
+VERSION := $(shell git rev-parse --short HEAD)
+LDFLAGS := -ldflags "-X main.Version=$(VERSION)"
+
 install:
 	go install github.com/a-h/templ/cmd/templ@latest
 	go install github.com/air-verse/air@latest
@@ -12,10 +15,10 @@ generate:
 	templ generate
 
 build: generate
-	go build -o bin/server ./cmd/server
+	go build $(LDFLAGS) -o bin/server ./cmd/server
 
 serve: generate
-	go run ./cmd/server
+	go run $(LDFLAGS) ./cmd/server
 
 dev:
 	templ generate -watch -proxy="http://localhost:8080" -cmd="go run ./cmd/server" -open-browser=false -watch-pattern="(.+\\.go$$)|(.+\\.templ$$)|(.+\\.css$$)"
