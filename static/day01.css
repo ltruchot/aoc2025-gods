@@ -36,6 +36,7 @@ section #dial-container {
 
 #dial {
   transform-origin: 450px 450px;
+  will-change: transform;
 }
 
 .controls {
