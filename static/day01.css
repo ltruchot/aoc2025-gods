@@ -19,7 +19,19 @@ section #dial-container {
   margin: 8px 0;
   width: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.dial-pointer {
+  width: 0;
+  height: 0;
+  border-left: 18px solid transparent;
+  border-right: 18px solid transparent;
+  border-top: 40px solid #dc2626;
+  margin-bottom: 4px;
+  z-index: 10;
 }
 
 #dial {
@@ -85,48 +97,55 @@ button.reset:hover:not(:disabled) {
   -webkit-appearance: none;
   appearance: none;
   flex: 1;
-  height: 6px;
-  background: #3f3f46;
-  border-radius: 3px;
+  height: 18px;
+  background: transparent;
   cursor: pointer;
   direction: rtl;
+}
+
+.speed-control input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: var(--zinc-700);
+  border-radius: 2px;
 }
 
 .speed-control input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
-  background: #a855f7;
-  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  background: var(--violet-600);
+  border: 1px solid var(--violet-500);
+  border-radius: 6px;
   cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  margin-top: -10px;
+  transition: all 0.2s;
 }
 
 .speed-control input[type="range"]::-webkit-slider-thumb:hover {
-  background: #c084fc;
-  transform: scale(1.1);
-}
-
-.speed-control input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  background: #a855f7;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
-}
-
-.speed-control input[type="range"]::-moz-range-thumb:hover {
-  background: #c084fc;
-  transform: scale(1.1);
+  background: var(--violet-600);
+  border-color: var(--violet-500);
 }
 
 .speed-control input[type="range"]::-moz-range-track {
-  height: 6px;
-  background: #3f3f46;
-  border-radius: 3px;
+  height: 4px;
+  background: var(--zinc-700);
+  border-radius: 2px;
+}
+
+.speed-control input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  background: var(--violet-600);
+  border: 1px solid var(--violet-500);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.speed-control input[type="range"]::-moz-range-thumb:hover {
+  background: var(--violet-600);
+  border-color: var(--violet-500);
 }
 
 .speed-control output {

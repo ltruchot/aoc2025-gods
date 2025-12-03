@@ -5,15 +5,18 @@ import "github.com/ltruchot/aoc2025-gods/templates"
 templ Day1() {
 	@templates.LayoutWithCSS("Day 1 - Secret Entrance", "/static/day01.css", "/day/1") {
 		<h2>Day 1: Secret Entrance</h2>
-		<section data-signals="{isAnimating: false, commandQueue: 'L50 R38 R10 L5', rotation: 180, status: '', pointedValue: 50, pointedZeros: 0, speed: 515 }">
-			<h3>Part 1</h3>
+		<section data-signals="{isAnimating: false, commandQueue: 'L50 R38 R10 L5 L12 R5 R101', rotation: 180, status: '', pointedValue: 50, pointedZeros: 0, clickedZeros: 0, speed: 515 }">
+			<h3>Part 1 & 2</h3>
+			<!-- Range control for the dial speed -->
 			<div class="row speed-control">
 				<span>Dial speed</span>
 				<input type="range" min="10" max="1000" data-bind:speed/>
 				<output class="speed-left" data-text="$speed + 'ms'"></output>
 			</div>
+			<!-- Animated dial SVG drawing -->
 			<div id="dial-container">
-				<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 900" style="width: 100%; max-width: 650px; height: auto;">
+				<div class="dial-pointer"></div>
+				<svg xmlns="http://www.w3.org/2000/svg" viewBox="45 45 810 810" style="width: 100%; max-width: 650px; height: auto;">
 					<defs>
 						<radialGradient id="dialGrad" cx="30%" cy="30%">
 							<stop offset="0%" stop-color="#52525b"></stop>
@@ -34,18 +37,12 @@ templ Day1() {
 						<circle cx="450" cy="450" r="135" fill="url(#centerGrad)" stroke="#52525b" stroke-width="5"></circle>
 						<circle cx="450" cy="450" r="75" fill="#27272a" stroke="#3f3f46" stroke-width="4"></circle>
 					</g>
-					<polygon points="450,50 432,10 468,10" fill="#dc2626"></polygon>
 				</svg>
 			</div>
+			<!-- Controls for the dial -->
 			<div class="controls">
 				<div class="row">
-					<span class="label">Pointed value:</span>
-					<output data-text="$pointedValue"></output>
-					<span class="label">Pointed zeros:</span>
-					<output data-text="$pointedZeros"></output>
-				</div>
-				<div class="row">
-					<span class="label">Commands:</span>
+					<span class="label">Commands (L = left, R = right):</span>
 				</div>
 				<textarea
 					id="commands"
@@ -54,38 +51,45 @@ templ Day1() {
 					data-bind:command-queue
 				></textarea>
 				<div class="row">
+					<span class="label">Pointed value:</span>
+					<output data-text="$pointedValue"></output>
+					<span class="label">Pointed zeros:</span>
+					<output data-text="$pointedZeros"></output>
+					<span class="label">Clicked zeros:</span>
+					<output data-text="$clickedZeros"></output>
+				</div>
+				<!-- Main button to run the all commands in the queue, through Datastar expressions -->
+				<div class="row">
 					<button
 						class="start"
-						data-attr:disabled="$isAnimating"
+						data-attr:disabled="$isAnimating || $commandQueue.length === 0"
 						data-on:click="
 							$isAnimating = true;
 							const commands = parseCommands($commandQueue);
 
 							commands.reduce((promise, cmd, index) => promise.then(async (rot) => {
 								$status = `Command ${index + 1}/${commands.length}: ${cmd.direction === 1 ? 'Left' : 'Right'} ${cmd.steps}`;
-								$rotation = rot + stepsToDegrees(cmd.steps, cmd.direction);
-								$pointedValue = wrapValue($pointedValue, cmd.steps, cmd.direction);
-								if ($pointedValue === 0) { $pointedZeros = $pointedZeros + 1; }
+								$rotation = rot + stepsToDegrees(cmd);
+								$clickedZeros = $clickedZeros + countClickedZeros($pointedValue, cmd);
+								$pointedValue = posAt($pointedValue, cmd);
+								if ($pointedValue === 0) $pointedZeros = $pointedZeros + 1;
 								await delay($speed/2 + $speed);
 								return $rotation;
 							}), Promise.resolve().then(() => {
 								if (commands.length === 0) throw new Error('No valid commands');
 								return $rotation;
-							})).then(() => {
-								$status = 'Sequence complete';
-							}).catch(e => {
-								$status = e.message;
-							}).finally(() => {
-								$isAnimating = false;
-							});
+							}))
+							.then(() => $status = 'Sequence complete')
+							.catch(e => $status = e.message)
+							.finally(() => $isAnimating = false);
 						"
 					>
-						Run safe dial commands
+						Run
 					</button>
 					<button
 						class="reset"
 						data-attr:disabled="$isAnimating"
-						data-on:click="$rotation = 180; $pointedValue = 50; $pointedZeros = 0; $status = ''; $commandQueue = '', $speed = 515"
+						data-on:click="$rotation = 180; $pointedValue = 50; $pointedZeros = 0; $clickedZeros = 0; $status = ''; $commandQueue = '', $speed = 515"
 					>
 						Reset
 					</button>
@@ -93,13 +97,9 @@ templ Day1() {
 				<div id="status" data-text="$status"></div>
 			</div>
 		</section>
-		<section>
-			<h3>Part 2</h3>
-			<output id="part2">TBD...</output>
-		</section>
 		<script src="https://cdn.jsdelivr.net/npm/ramda@0.32.0/dist/ramda.min.js"></script>
 		<script>
-			const { pipe, trim, split, map, filter, toUpper, match, ifElse, always, isEmpty, not } = R;
+			const { pipe, trim, split, map, filter, toUpper, match, ifElse, always, isEmpty, not, range, equals, length } = R;
 
 			// Parse single command: "L38" -> { direction: 1, steps: 38 }
 			const parseCommand = pipe(
@@ -117,13 +117,21 @@ templ Day1() {
 			const parseCommands = pipe(trim, split(/\s+/), map(parseCommand), filter(Boolean));
 
 			// Steps to degrees: 38 steps * direction -> 136.8 degrees
-			const stepsToDegrees = (steps, direction) => steps * 3.6 * direction;
+			const stepsToDegrees = ({ steps, direction }) => steps * 3.6 * direction;
 
-			// Wrap value between 0-99
-			const wrapValue = (current, steps, direction) => ((current - steps * direction) % 100 + 100) % 100;
+			// Position after n steps from start in given direction (0-99)
+			const posAt = (start, { steps, direction }) => ((start - steps * direction) % 100 + 100) % 100;
 
 			// Promisified timeout
 			const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+			// Count how many times the dial points at 0 (during + end of rotation, not start)
+			const countClickedZeros = (start, { steps, direction }) => pipe(
+				range(1), // [1, 2, ..., steps] (skip start, include final)
+				map(n => posAt(start, { steps: n, direction })), // position at each step
+				filter(equals(0)), // keep only zeros
+				length // count them
+			)(steps + 1);
 		</script>
 	}
 }
