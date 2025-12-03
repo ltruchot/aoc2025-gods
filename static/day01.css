@@ -116,16 +116,17 @@ button.reset:hover:not(:disabled) {
   -webkit-appearance: none;
   appearance: none;
   flex: 1;
-  height: 18px;
+  height: 24px;
   background: transparent;
   cursor: pointer;
   direction: rtl;
+  margin: 0;
+  padding: 0;
 }
 
 .speed-control input[type="range"]::-webkit-slider-runnable-track {
   height: 4px;
-  background: var(--zinc-700);
-  border-radius: 2px;
+  background: transparent;
 }
 
 .speed-control input[type="range"]::-webkit-slider-thumb {
@@ -135,7 +136,7 @@ button.reset:hover:not(:disabled) {
   height: 24px;
   background: var(--violet-600);
   border: 1px solid var(--violet-500);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   margin-top: -10px;
   transition: all 0.2s;
@@ -148,8 +149,7 @@ button.reset:hover:not(:disabled) {
 
 .speed-control input[type="range"]::-moz-range-track {
   height: 4px;
-  background: var(--zinc-700);
-  border-radius: 2px;
+  background: transparent;
 }
 
 .speed-control input[type="range"]::-moz-range-thumb {
@@ -157,7 +157,7 @@ button.reset:hover:not(:disabled) {
   height: 24px;
   background: var(--violet-600);
   border: 1px solid var(--violet-500);
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -174,7 +174,7 @@ button.reset:hover:not(:disabled) {
 }
 
 .speed-control .speed-left {
-  min-width: 60px;
+  width: 45px;
   text-align: center;
 }
 
