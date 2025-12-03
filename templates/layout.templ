@@ -3,7 +3,9 @@ package templates
 import "strconv"
 
 templ Layout(title string, currentPath string) {
-	@LayoutWithCSS(title, "", currentPath)
+	@LayoutWithCSS(title, "", currentPath) {
+		{ children... }
+	}
 }
 
 templ LayoutWithCSS(title string, css string, currentPath string) {
@@ -12,7 +14,6 @@ templ LayoutWithCSS(title string, css string, currentPath string) {
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-			<meta name="view-transition" content="same-origin"/>
 			<title>{ title } - AoC 2025</title>
 			<script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.0-RC.6/bundles/datastar.js"></script>
 			<link rel="stylesheet" href="/static/common.css"/>
@@ -20,40 +21,7 @@ templ LayoutWithCSS(title string, css string, currentPath string) {
 				<link rel="stylesheet" href={ css }/>
 			}
 			<style>
-				@view-transition {
-					navigation: auto;
-				}
-				::view-transition-old(root) {
-					animation: fade-out 0.2s ease-out;
-				}
-				::view-transition-new(root) {
-					animation: fade-in 0.3s ease-in;
-				}
-				@keyframes fade-out {
-					from { opacity: 1; transform: scale(1); }
-					to { opacity: 0; transform: scale(0.95); }
-				}
-				@keyframes fade-in {
-					from { opacity: 0; transform: scale(1.05); }
-					to { opacity: 1; transform: scale(1); }
-				}
-				main {
-					view-transition-name: main-content;
-				}
-				::view-transition-old(main-content) {
-					animation: slide-out 0.25s ease-out;
-				}
-				::view-transition-new(main-content) {
-					animation: slide-in 0.25s ease-in;
-				}
-				@keyframes slide-out {
-					from { opacity: 1; transform: translateX(0); }
-					to { opacity: 0; transform: translateX(-30px); }
-				}
-				@keyframes slide-in {
-					from { opacity: 0; transform: translateX(30px); }
-					to { opacity: 1; transform: translateX(0); }
-				}
+				@view-transition { navigation: auto; }
 			</style>
 		</head>
 		<body>

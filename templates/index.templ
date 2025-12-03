@@ -2,7 +2,19 @@ package templates
 
 templ Index() {
 	@Layout("Home", "/") {
-		<h2>Welcome to Advent of Code 2025</h2>
-		<p>Select a day from the navigation to see the solution.</p>
+		<h2>Christmas Puzzles for Coders</h2>
+		<blockquote class="hint">
+			<p><a href="https://adventofcode.com/" target="_blank"><strong>Advent of Code</strong></a> is an annual set of Christmas-themed programming puzzles released daily from December 1st to 25th. Each puzzle has two parts, and solving them earns stars.</p>
+			<p>This project is a minimalist scaffold built with <a href="https://go.dev/" target="_blank">Go</a> and <a href="https://data-star.dev/" target="_blank">Datastar</a> to solve and visualize the 2025 edition.</p>
+			<p>Source code available on <a href="https://github.com/ltruchot/aoc2025-gods" target="_blank">GitHub</a>.</p>
+		</blockquote>
+		<div class="logos">
+			<a href="https://go.dev/" target="_blank">
+				<img src="/static/img/ladder.svg" alt="Go" class="logo-go"/>
+			</a>
+			<a href="https://data-star.dev/" target="_blank">
+				<img src="/static/img/datastar.png" alt="Datastar" class="logo-datastar"/>
+			</a>
+		</div>
 	}
 }
