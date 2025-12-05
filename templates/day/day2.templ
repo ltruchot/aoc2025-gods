@@ -5,7 +5,21 @@ import "github.com/ltruchot/aoc2025-gods/templates"
 templ Day2() {
 	@templates.LayoutWithCSS("Day 2 - Gift Shop", "/static/day02.css", "/day/2") {
 		<h2>Day 2: Gift Shop</h2>
-		<section data-signals="{isScanning: false, inputData: '11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124', status: '', invalidFound: '-', part1Output: 0, part2Output: 'TBD', speed: 500 }">
+		<section
+			data-signals="{
+		  isScanning: false,
+		  inputData: '11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124',
+		  status: '',
+		  invalidFound: '-1',
+		  part1Output: 0,
+		  part2Output: 'TBD',
+		  speed: 500,
+		  elfTop: 0,
+		  elfTransition: '',
+		  _GIFT_HEIGHT: 75,
+		  _CHUNK_SIZE: 1000
+		  }"
+		>
 			<h3>Part 1 & 2</h3>
 			<!-- Range control for the scan speed -->
 			<div class="row speed-control">
@@ -40,10 +54,55 @@ templ Day2() {
 						data-on:click="
 							$isScanning = true;
 							$status = 'Scanning...';
-							runPuzzle($inputData, (id) => { $invalidFound = id; $part1Output += id; }, () => $speed)
+							const stack = byId('gift-stack');
+							const elf = byId('elf');
+
+							Promise.resolve()
+								.then(() => parseInput($inputData))
+								.then(parsed => reduce(
+									(p, op) => p.then(op),
+									Promise.resolve(),
+									chain(({ start, end }) => chain(chunk => {
+										const ids = range(chunk.start, chunk.end + 1);
+										const invalidIndices = getInvalidIndices(chunk);
+										const lastIdx = length(ids) - 1;
+										const lastInvalid = invalidIndices[length(invalidIndices) - 1];
+
+										return [
+											() => {
+												fillChunkStack(stack, chunk.start, chunk.end);
+												$elfTransition = 'top 0ms ease-in-out';
+												$elfTop = 0;
+												return delay(10);
+											},
+											...map(idx => async () => {
+												$elfTransition = `top ${$speed}ms ease-in-out`;
+												$elfTop = idx * $_GIFT_HEIGHT;
+												stack.children[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+												await delay($speed);
+												stack.children[idx].classList.add('invalid');
+												$invalidFound = ids[idx];
+												$part1Output += ids[idx];
+												await delay($speed);
+											}, invalidIndices),
+											...(lastInvalid !== lastIdx ? [async () => {
+												$elfTransition = `top ${$speed}ms ease-in-out`;
+												$elfTop = lastIdx * $_GIFT_HEIGHT;
+												stack.children[lastIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+												await delay($speed);
+											}] : [])
+										];
+									}, splitIntoChunks(start, end, $_CHUNK_SIZE)), parsed)
+								))
 								.then(() => $status = 'Complete')
 								.catch(e => $status = e.message)
-								.finally(() => $isScanning = false);
+								.finally(() => {
+									stack.innerHTML = '';
+									$elfTransition = 'top 0ms ease-in-out';
+									$elfTop = 0;
+									window.scrollTo({ top: 0, behavior: 'smooth' });
+									$isScanning = false;
+								});
 						"
 					>
 						Run
@@ -51,7 +110,7 @@ templ Day2() {
 					<button
 						class="reset"
 						data-attr:disabled="$isScanning"
-						data-on:click="$inputData = '11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124'; $invalidFound = '-'; $part1Output = 0; $part2Output = 'TBD'; $status = ''; $speed = 500"
+						data-on:click="$inputData = ''; $invalidFound = '-'; $part1Output = 0; $part2Output = 'TBD'; $status = ''; $speed = 500"
 					>
 						Reset
 					</button>
@@ -62,7 +121,7 @@ templ Day2() {
 			<div id="stacks-container">
 				<div class="scan-wrapper">
 					<div id="gift-stack" class="gift-stack"></div>
-					<div id="elf" class="elf">
+					<div id="elf" class="elf" data-style:transition="$elfTransition" data-style:top="$elfTop + 'px'">
 						<img src="/static/img/elf_scanner.svg" alt="Elf scanner"/>
 					</div>
 				</div>
@@ -78,11 +137,24 @@ templ Day2() {
 			const { delay, byId, pickRandom, div, isEven } = U;
 			const { pipe, trim, split, map, filter, length, slice, equals, range, reduce, addIndex, unfold, forEach, chain } = R;
 
-			// Constants
-			const GIFT_HEIGHT = 75;
-			const CHUNK_SIZE = 1000;
-			const stack = byId('gift-stack');
-			const elf = byId('elf');
+			// Parse a range line "123-456" into { start, end }
+			const parseRange = pipe(
+				trim,
+				split('-'),
+				map(Number),
+				([start, end]) => {
+					if (isNaN(start) || isNaN(end)) throw new Error('Invalid range format');
+					if (start > end) throw new Error('Invalid range: start > end');
+					return { start, end };
+				}
+			);
+
+			// Parse all input ranges into array of ranges
+			const parseInput = input => {
+				const ranges = pipe(trim, split(','), filter(Boolean), map(parseRange))(input);
+				if (ranges.length === 0) throw new Error('No valid ranges');
+				return ranges;
+			};
 
 			// Generate a gift SVG with random colors
 			const generateGift = n => ((p, r) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 2 12 12" overflow="visible"><g transform="translate(7, 5)"><rect x="0" y="1.5" width="6" height="4.5" rx="0.5" fill="${p}"/><rect x="-0.5" y="0.5" width="7" height="1.5" rx="0.5" fill="${p}"/><rect x="2.5" y="0.5" width="1" height="5.5" fill="${r}"/><rect x="0" y="3" width="6" height="1" fill="${r}"/><ellipse cx="3" cy="0.5" rx="1.2" ry="0.6" fill="${r}"/><rect class="label-bg" x="4" y="2" width="${String(n).length + 1.2}" height="2" rx="0.3"/><text x="${4 + (String(n).length + 1.2) / 2}" y="3.5">${n}</text></g></svg>`)(pickRandom(paperColors), pickRandom(ribbonColors));
@@ -93,23 +165,9 @@ templ Day2() {
 				return isEven(len) && equals(slice(0, len / 2, str), slice(len / 2, Infinity, str));
 			});
 
-			// Parse a range line "123-456" into { start, end }
-			const parseRange = pipe(
-				trim,
-				split('-'),
-				map(Number),
-				([start, end]) => ({ start, end })
-			);
-
-			// Parse all input ranges into array of ranges
-			const parseInput = pipe(trim, split(','), filter(Boolean), map(parseRange));
-
-			// Create gift element
-			const createGiftElement = id => div({ className: 'gift', innerHTML: generateGift(id) });
-
 			// Split a range into chunks of CHUNK_SIZE
-			const splitIntoChunks = (start, end) => unfold(
-				i => i > end ? false : [{ start: i, end: Math.min(i + CHUNK_SIZE - 1, end) }, i + CHUNK_SIZE],
+			const splitIntoChunks = (start, end, chunkSize) => unfold(
+				i => i > end ? false : [{ start: i, end: Math.min(i + chunkSize - 1, end) }, i + chunkSize],
 				start
 			);
 
@@ -118,81 +176,17 @@ templ Day2() {
 				const ids = range(start, end + 1);
 				const invalidIndices = addIndex(reduce)((acc, id, idx) => isInvalidId(id) ? [...acc, idx] : acc, [])(ids);
 				stack.innerHTML = '';
-				forEach(id => stack.appendChild(createGiftElement(id)), ids);
+				forEach(id => stack.appendChild(div({ className: 'gift', innerHTML: generateGift(id) })), ids);
 				return { invalidIndices, ids };
 			};
 
-			// Move elf to position
-			const moveElf = (elf, index, speed) => {
-				elf.style.transition = `top ${speed}ms ease-in-out`;
-				elf.style.top = `${index * GIFT_HEIGHT}px`;
-			};
-
-			// Scroll to gift at index in stack
-			const scrollToGift = (stack, index) => {
-				const gift = stack.children[index];
-				if (gift) {
-					gift.scrollIntoView({ behavior: 'smooth', block: 'center' });
-				}
-			};
-
-			// Activate glow on a gift element
-			const activateGlow = gift => gift.classList.add('invalid');
 
 			// Pre-compute invalid indices for a range (pure, no DOM)
-			const getInvalidIndices = (start, end) => {
+			const getInvalidIndices = ({start, end}) => {
 				const ids = range(start, end + 1);
 				return addIndex(reduce)((acc, id, idx) => isInvalidId(id) ? [...acc, idx] : acc, [])(ids);
 			};
 
-			// Main puzzle runner
-			const runPuzzle = async (inputData, onInvalidFound, getSpeed) => {
-
-				await reduce(
-					(p, op) => p.then(op), // Execute all ops sequentially
-				    Promise.resolve(),  // Initial promise of reduce
-					// Flat list of all operations to execute 
-					chain(({ start, end }) => chain(chunk => {
-						const ids = range(chunk.start, chunk.end + 1);
-						const invalidIndices = getInvalidIndices(chunk.start, chunk.end);
-						const lastIdx = length(ids) - 1;
-						const lastInvalid = invalidIndices[length(invalidIndices) - 1];
-
-						return [
-							// Setup chunk
-							() => {
-								fillChunkStack(stack, chunk.start, chunk.end);
-								moveElf(elf, 0, 0);
-								return delay(10);
-							},
-							// Animate each invalid
-							...map(idx => async () => {
-								const speed = getSpeed();
-								moveElf(elf, idx, speed);
-								scrollToGift(stack, idx);
-								await delay(speed);
-								activateGlow(stack.children[idx]);
-								onInvalidFound(ids[idx]);
-								await delay(speed);
-							}, invalidIndices),
-							// Animate to bottom (if needed)
-							...(lastInvalid !== lastIdx ? [async () => {
-								const speed = getSpeed();
-								moveElf(elf, lastIdx, speed);
-								scrollToGift(stack, lastIdx);
-								await delay(speed);
-							}] : [])
-						];
-					}, splitIntoChunks(start, end)), parseInput(inputData)))
-					// Finally clear gifts, reset elf to top, scroll to show results
-					.finally(() => {
-						stack.innerHTML = '';
-						moveElf(elf, 0, 0);
-						window.scrollTo({ top: 0, behavior: 'smooth' });
-					});
-
-
-			};
 		</script>
 	}
 }
