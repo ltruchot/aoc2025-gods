@@ -18,6 +18,12 @@ func New(version string) *Handler {
 }
 
 func (h *Handler) setCache(w http.ResponseWriter, r *http.Request) bool {
+	// In dev mode, disable all caching
+	if h.version == "dev" {
+		w.Header().Set("Cache-Control", "no-store, no-cache, must-revalidate")
+		return false
+	}
+
 	etag := `"` + h.version + `"`
 	w.Header().Set("ETag", etag)
 	w.Header().Set("Cache-Control", "no-cache")
