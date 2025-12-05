@@ -102,8 +102,8 @@ templ Day1() {
 				<p><strong>Part 2:</strong> Count every time the dial points at zero, including during rotations.</p>
 			</blockquote>
 		</section>
-		<script type="module">
-			import { delay } from '/static/utils.js';
+		<script>
+			const { delay } = U;
 			const { pipe, trim, split, map, filter, toUpper, match, ifElse, always, isEmpty, not, range, equals, length } = R;
 
 			// Parse single command: "L38" -> { direction: 1, steps: 38 }

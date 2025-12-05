@@ -1,5 +1,5 @@
 // 100 paper colors (warm tones, pastels, rich colors)
-export const paperColors = [
+const paperColors = [
   '#e74c3c', '#c0392b', '#ff6b6b', '#ee5a5a', '#d63031',
   '#e55039', '#eb4d4b', '#ff7675', '#fab1a0', '#e17055',
   '#d35400', '#e67e22', '#f39c12', '#f9ca24', '#fdcb6e',
@@ -23,7 +23,7 @@ export const paperColors = [
 ];
 
 // 100 ribbon colors (metallics, brights, contrasting tones)
-export const ribbonColors = [
+const ribbonColors = [
   '#ffd700', '#ffec8b', '#ffc107', '#ffab00', '#ff8f00',
   '#ff6f00', '#fff59d', '#fff176', '#ffee58', '#ffeb3b',
   '#ffffff', '#fafafa', '#f5f5f5', '#eeeeee', '#e0e0e0',

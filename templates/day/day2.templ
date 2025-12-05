@@ -5,7 +5,7 @@ import "github.com/ltruchot/aoc2025-gods/templates"
 templ Day2() {
 	@templates.LayoutWithCSS("Day 2 - Gift Shop", "/static/day02.css", "/day/2") {
 		<h2>Day 2: Gift Shop</h2>
-		<section data-signals="{isScanning: false, inputData: '11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124', status: '', invalidFound: '', part1Output: 0, part2Output: '', speed: 500 }">
+		<section data-signals="{isScanning: false, inputData: '11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124', status: '', invalidFound: '-', part1Output: 0, part2Output: 'TBD', speed: 500 }">
 			<h3>Part 1 & 2</h3>
 			<!-- Range control for the scan speed -->
 			<div class="row speed-control">
@@ -51,7 +51,7 @@ templ Day2() {
 					<button
 						class="reset"
 						data-attr:disabled="$isScanning"
-						data-on:click="$inputData = '11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124'; $invalidFound = ''; $part1Output = 0; $part2Output = ''; $status = ''; $speed = 500; document.getElementById('stacks-container').innerHTML = ''"
+						data-on:click="$inputData = '11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124'; $invalidFound = '-'; $part1Output = 0; $part2Output = 'TBD'; $status = ''; $speed = 500; resetElf()"
 					>
 						Reset
 					</button>
@@ -60,15 +60,15 @@ templ Day2() {
 			</div>
 			<!-- Gift stacks display area -->
 			<div id="stacks-container"></div>
-			<blockquote class="hint">
-				<p>You need to buy some gifts at the shop.</p>
-				<p><strong>Part 1:</strong> TBD</p>
-				<p><strong>Part 2:</strong> TBD</p>
-			</blockquote>
 		</section>
-		<script type="module">
-			import { paperColors, ribbonColors } from '/static/day02-colors.js';
-			import { delay, byId, pickRandom, div } from '/static/utils.js';
+		<blockquote class="hint">
+			<p>Find invalid product IDs in the gift shop database. Invalid = digits repeated twice (55, 6464, 123123...).</p>
+			<p><strong>Part 1:</strong> Add up all invalid IDs in the given ranges.</p>
+			<p><strong>Part 2:</strong> TBD</p>
+		</blockquote>
+		<script src="/static/day02-colors.js"></script>
+		<script>
+			const { delay, byId, pickRandom, div } = U;
 			const { pipe, trim, split, map, filter, length, slice, equals, curry, range, converge, identity, reduce, addIndex } = R;
 
 			// Constants
@@ -215,10 +215,32 @@ templ Day2() {
 						await scanChunk(elf, stack, ids, invalidIndices, getSpeed(), onInvalidFound);
 					}
 				}
+
+				// Clear gifts but keep elf, reset elf to top, scroll to show results
+				const wrapper = container.querySelector('.scan-wrapper');
+				const stack = wrapper.querySelector('.gift-stack');
+				const elf = wrapper.querySelector('.elf');
+				stack.innerHTML = '';
+				moveElf(elf, 0, 0);
+				window.scrollTo({ top: 0, behavior: 'smooth' });
 			};
 
-			// Expose to global scope for Datastar
-			window.runPuzzle = runPuzzle;
+			// Show elf at initial position
+			const resetElf = () => {
+				const container = byId('stacks-container');
+				container.innerHTML = '';
+				const wrapper = div({ className: 'scan-wrapper' });
+				const stack = div({ className: 'gift-stack' });
+				const elf = document.createElement('div');
+				elf.className = 'elf';
+				elf.innerHTML = '<img src="/static/img/elf_scanner.svg" alt="Elf scanner"/>';
+				wrapper.appendChild(stack);
+				wrapper.appendChild(elf);
+				container.appendChild(wrapper);
+			};
+
+			// Show initial elf at page load
+			resetElf();
 		</script>
 	}
 }

@@ -1,19 +1,22 @@
 // Shared utilities for AoC 2025
+const U = {
+	// Promisified timeout
+	delay: ms => new Promise(resolve => setTimeout(resolve, ms)),
 
-// Promisified timeout
-export const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+	// getElementById shorthand
+	byId: id => document.getElementById(id),
 
-// getElementById shorthand
-export const byId = id => document.getElementById(id);
+	// Pick random element from array
+	pickRandom: arr => arr[Math.floor(Math.random() * arr.length)],
 
-// Pick random element from array
-export const pickRandom = arr => arr[Math.floor(Math.random() * arr.length)];
+	// Create element with attributes (curried)
+	createEl: R.curry((tag, attrs) => {
+		const el = document.createElement(tag);
+		Object.assign(el, attrs);
+		return el;
+	}),
 
-// Create element with attributes (curried)
-export const createEl = R.curry((tag, attrs) => {
-	const el = document.createElement(tag);
-	Object.assign(el, attrs);
-	return el;
-});
-
-export const div = createEl('div');
+	// Shorthand for div
+	div: null
+};
+U.div = U.createEl('div');
