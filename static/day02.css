@@ -46,6 +46,19 @@ section {
   display: block;
 }
 
+.gift svg .label-bg {
+  fill: #fff;
+  stroke: #999;
+  stroke-width: 0.1px;
+}
+
+.gift svg text {
+  font-family: Arial, sans-serif;
+  font-size: 1.4px;
+  text-anchor: middle;
+  fill: #000;
+}
+
 .gift + .gift {
   margin-top: -75px;
 }
