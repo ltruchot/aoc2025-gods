@@ -66,22 +66,25 @@ templ Day1() {
 						data-on:click="
 							$isAnimating = true;
 							const commands = parseCommands($commandQueue);
+							const total = commands.length;
 
-							commands.reduce((promise, cmd, index) => promise.then(async (rot) => {
-								$status = `Command ${index + 1}/${commands.length}: ${cmd.direction === 1 ? 'Left' : 'Right'} ${cmd.steps}`;
+							resolveP(commands)
+							.then(cmds => {
+								if (cmds.length === 0) throw new Error('No valid commands');
+								return addIndex(map)((cmd, index) => ({ cmd, index }), cmds);
+							})
+							.then(reduceP(async (rot, { cmd, index }) => {
+								$status = `Command ${index + 1}/${total}: ${cmd.direction === 1 ? 'Left' : 'Right'} ${cmd.steps}`;
 								$rotation = rot + stepsToDegrees(cmd);
 								$clickedZeros = $clickedZeros + countClickedZeros($pointedValue, cmd);
 								$pointedValue = posAt($pointedValue, cmd);
 								if ($pointedValue === 0) $pointedZeros = $pointedZeros + 1;
 								await delay($speed/2 + $speed);
 								return $rotation;
-							}), Promise.resolve().then(() => {
-								if (commands.length === 0) throw new Error('No valid commands');
-								return $rotation;
-							}))
-							.then(() => $status = 'Sequence complete')
-							.catch(e => $status = e.message)
-							.finally(() => $isAnimating = false);
+							}, $rotation))
+							.then(() => { $status = 'Sequence complete' })
+							.catch(e => { $status = e.message })
+							.finally(() => { $isAnimating = false });
 						"
 					>
 						Run
@@ -104,7 +107,8 @@ templ Day1() {
 		</section>
 		<script>
 			const { delay } = U;
-			const { pipe, trim, split, map, filter, toUpper, match, ifElse, always, isEmpty, not, range, equals, length } = R;
+			const { pipe, trim, split, map, filter, toUpper, match, ifElse, always, range, equals, length, addIndex } = R;
+			const { isNotNilOrEmpty, resolveP, reduceP } = RA;
 
 			// Parse single command: "L38" -> { direction: 1, steps: 38 }
 			const parseCommand = pipe(
@@ -112,7 +116,7 @@ templ Day1() {
 				toUpper,
 				match(/^([LR])(\d+)$/),
 				ifElse(
-					pipe(isEmpty, not),
+					isNotNilOrEmpty,
 					([, dir, steps]) => ({ direction: dir === 'L' ? 1 : -1, steps: parseInt(steps, 10) }),
 					always(null)
 				)

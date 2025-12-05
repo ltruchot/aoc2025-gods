@@ -9,9 +9,6 @@ const U = {
 	// Pick random element from array
 	pickRandom: arr => arr[Math.floor(Math.random() * arr.length)],
 
-	// Check if number is even
-	isEven: n => n % 2 === 0,
-
 	// Create element with attributes (curried)
 	createEl: R.curry((tag, attrs) => {
 		const el = document.createElement(tag);

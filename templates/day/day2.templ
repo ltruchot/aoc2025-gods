@@ -55,54 +55,54 @@ templ Day2() {
 							$isScanning = true;
 							$status = 'Scanning...';
 							const stack = byId('gift-stack');
-							const elf = byId('elf');
 
-							Promise.resolve()
-								.then(() => parseInput($inputData))
-								.then(parsed => reduce(
-									(p, op) => p.then(op),
-									Promise.resolve(),
-									chain(({ start, end }) => chain(chunk => {
-										const ids = range(chunk.start, chunk.end + 1);
-										const invalidIndices = getInvalidIndices(chunk);
-										const lastIdx = length(ids) - 1;
-										const lastInvalid = invalidIndices[length(invalidIndices) - 1];
+							const buildChunkOps = chunk => {
+								const ids = range(chunk.start, chunk.end + 1);
+								const invalidIndices = getInvalidIndices(chunk);
+								const lastIdx = length(ids) - 1;
+								const lastInvalid = invalidIndices[length(invalidIndices) - 1];
+								return [
+									() => {
+										fillChunkStack(stack, chunk.start, chunk.end);
+										$elfTransition = 'top 0ms ease-in-out';
+										$elfTop = 0;
+										return delay(10);
+									},
+									...map(idx => async () => {
+										$elfTransition = `top ${$speed}ms ease-in-out`;
+										$elfTop = idx * $_GIFT_HEIGHT;
+										stack.children[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+										await delay($speed);
+										stack.children[idx].classList.add('invalid');
+										$invalidFound = ids[idx];
+										$part1Output += ids[idx];
+										await delay($speed);
+									}, invalidIndices),
+									...(lastInvalid !== lastIdx ? [async () => {
+										$elfTransition = `top ${$speed}ms ease-in-out`;
+										$elfTop = lastIdx * $_GIFT_HEIGHT;
+										stack.children[lastIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
+										await delay($speed);
+									}] : [])
+								];
+							};
 
-										return [
-											() => {
-												fillChunkStack(stack, chunk.start, chunk.end);
-												$elfTransition = 'top 0ms ease-in-out';
-												$elfTop = 0;
-												return delay(10);
-											},
-											...map(idx => async () => {
-												$elfTransition = `top ${$speed}ms ease-in-out`;
-												$elfTop = idx * $_GIFT_HEIGHT;
-												stack.children[idx].scrollIntoView({ behavior: 'smooth', block: 'center' });
-												await delay($speed);
-												stack.children[idx].classList.add('invalid');
-												$invalidFound = ids[idx];
-												$part1Output += ids[idx];
-												await delay($speed);
-											}, invalidIndices),
-											...(lastInvalid !== lastIdx ? [async () => {
-												$elfTransition = `top ${$speed}ms ease-in-out`;
-												$elfTop = lastIdx * $_GIFT_HEIGHT;
-												stack.children[lastIdx].scrollIntoView({ behavior: 'smooth', block: 'center' });
-												await delay($speed);
-											}] : [])
-										];
-									}, splitIntoChunks(start, end, $_CHUNK_SIZE)), parsed)
-								))
-								.then(() => $status = 'Complete')
-								.catch(e => $status = e.message)
-								.finally(() => {
-									stack.innerHTML = '';
-									$elfTransition = 'top 0ms ease-in-out';
-									$elfTop = 0;
-									window.scrollTo({ top: 0, behavior: 'smooth' });
-									$isScanning = false;
-								});
+							resolveP($inputData)
+							.then(pipe(
+								parseInput,
+								chain(({ start, end }) => splitIntoChunks(start, end, $_CHUNK_SIZE)),
+								chain(buildChunkOps),
+								reduceP((_, op) => op(), null)
+							))
+							.then(() => { $status = 'Complete' })
+							.catch(e => { $status = e.message })
+							.finally(() => {
+								stack.innerHTML = '';
+								$elfTransition = 'top 0ms ease-in-out';
+								$elfTop = 0;
+								window.scrollTo({ top: 0, behavior: 'smooth' });
+								$isScanning = false;
+							});
 						"
 					>
 						Run
@@ -134,8 +134,9 @@ templ Day2() {
 		</blockquote>
 		<script src={ "/static/day02-colors.js?v=" + templates.Version }></script>
 		<script>
-			const { delay, byId, pickRandom, div, isEven } = U;
-			const { pipe, trim, split, map, filter, length, slice, equals, range, reduce, addIndex, unfold, forEach, chain } = R;
+			const { delay, byId, pickRandom, div } = U;
+			const { pipe, trim, split, map, filter, length, slice, equals, range, addIndex, unfold, forEach, chain } = R;
+			const { resolveP, reduceP, isEven } = RA;
 
 			// Parse a range line "123-456" into { start, end }
 			const parseRange = pipe(
