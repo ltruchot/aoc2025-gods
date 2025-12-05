@@ -1,0 +1,44 @@
+/* Day 2 specific styles */
+h2 {
+  margin-bottom: 4px;
+}
+
+h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.controls textarea {
+  height: 120px;
+  font-size: 12px;
+}
+
+/* Gift stacks */
+#stacks-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.gift-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gift svg {
+  width: 150px;
+  height: 150px;
+  display: block;
+}
+
+.gift + .gift {
+  margin-top: -75px;
+}

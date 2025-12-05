@@ -186,6 +186,153 @@ button:disabled {
   color: var(--violet-300);
 }
 
+/* Day controls - shared between days */
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+  max-width: 500px;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+}
+
+.row.stats {
+  gap: 8px;
+}
+
+.row.stats output {
+  min-width: 50px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+
+.row.stats output.small {
+  min-width: 32px;
+  padding: 8px;
+}
+
+.label {
+  color: #a1a1aa;
+  font-size: 14px;
+}
+
+#status {
+  color: #a1a1aa;
+  font-size: 14px;
+}
+
+#status:empty {
+  display: none;
+}
+
+.controls textarea {
+  width: 100%;
+  text-align: left;
+  font-family: monospace;
+}
+
+button.start {
+  background: #166534;
+}
+
+button.start:hover:not(:disabled) {
+  background: #15803d;
+}
+
+button.reset {
+  background: #991b1b;
+}
+
+button.reset:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+/* Speed range slider */
+.speed-control {
+  width: 100%;
+  max-width: 500px;
+}
+
+.speed-control input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  height: 24px;
+  background: transparent;
+  cursor: pointer;
+  direction: rtl;
+  margin: 0;
+  padding: 0;
+}
+
+.speed-control input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: transparent;
+}
+
+.speed-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  background: var(--violet-600);
+  border: 1px solid var(--violet-500);
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: -10px;
+  transition: all 0.2s;
+}
+
+.speed-control input[type="range"]::-webkit-slider-thumb:hover {
+  background: var(--violet-600);
+  border-color: var(--violet-500);
+}
+
+.speed-control input[type="range"]::-moz-range-track {
+  height: 4px;
+  background: transparent;
+}
+
+.speed-control input[type="range"]::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  background: var(--violet-600);
+  border: 1px solid var(--violet-500);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.speed-control input[type="range"]::-moz-range-thumb:hover {
+  background: var(--violet-600);
+  border-color: var(--violet-500);
+}
+
+.speed-control output {
+  font-size: 12px;
+  color: #a1a1aa;
+  white-space: nowrap;
+}
+
+.speed-control .speed-left {
+  width: 45px;
+  text-align: center;
+}
+
+.speed-control .speed-right {
+  min-width: 120px;
+  text-align: left;
+  color: #a855f7;
+  font-weight: bold;
+}
+
 .logos {
   display: flex;
   justify-content: center;

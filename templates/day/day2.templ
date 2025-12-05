@@ -3,12 +3,132 @@ package day
 import "github.com/ltruchot/aoc2025-gods/templates"
 
 templ Day2() {
-	@templates.Layout("Day 2 - Gift Shop", "/day/2") {
+	@templates.LayoutWithCSS("Day 2 - Gift Shop", "/static/day02.css", "/day/2") {
 		<h2>Day 2: Gift Shop</h2>
-		<section style="display: flex; flex-direction: column; align-items: center;">
-			<blockquote class="hint" style="text-align: center;">
-				<p>Currently coding... See you soon!</p>
+		<section data-signals="{isScanning: false, inputData: '11-22\n95-115\n998-1012\n1188511880-1188511890\n222220-222224\n1698522-1698528\n446443-446449\n38593856-38593862\n565653-565659\n824824821-824824827\n2121212118-2121212124', status: '', currentLine: '', part1Output: '', part2Output: '', speed: 50 }">
+			<h3>Part 1 & 2</h3>
+			<!-- Range control for the scan speed -->
+			<div class="row speed-control">
+				<span>Scan speed</span>
+				<input type="range" min="1" max="200" data-bind:speed/>
+				<output class="speed-left" data-text="$speed + 'ms'"></output>
+			</div>
+			<!-- Controls -->
+			<div class="controls">
+				<div class="row">
+					<span class="label">Input data:</span>
+				</div>
+				<textarea
+					id="input"
+					data-attr:disabled="$isScanning"
+					placeholder="Paste your puzzle input here..."
+					data-bind:input-data
+				></textarea>
+				<div class="row stats">
+					<span class="label">Current:</span>
+					<output class="small" data-text="$currentLine"></output>
+					<span class="label">Part 1:</span>
+					<output data-text="$part1Output"></output>
+					<span class="label">Part 2:</span>
+					<output data-text="$part2Output"></output>
+				</div>
+				<!-- Main buttons -->
+				<div class="row">
+					<button
+						class="start"
+						data-attr:disabled="$isScanning || $inputData.length === 0"
+						data-on:click="
+							$isScanning = true;
+							$status = 'Scanning...';
+							runPuzzle($inputData, (line) => $currentLine = line)
+								.then(() => $status = 'Complete')
+								.catch(e => $status = e.message)
+								.finally(() => $isScanning = false);
+						"
+					>
+						Run
+					</button>
+					<button
+						class="reset"
+						data-attr:disabled="$isScanning"
+						data-on:click="$inputData = '11-22\n95-115\n998-1012\n1188511880-1188511890\n222220-222224\n1698522-1698528\n446443-446449\n38593856-38593862\n565653-565659\n824824821-824824827\n2121212118-2121212124'; $currentLine = ''; $part1Output = ''; $part2Output = ''; $status = ''; $speed = 50; document.getElementById('stacks-container').innerHTML = ''"
+					>
+						Reset
+					</button>
+				</div>
+				<div id="status" data-text="$status"></div>
+			</div>
+			<!-- Gift stacks display area -->
+			<div id="stacks-container"></div>
+			<blockquote class="hint">
+				<p>You need to buy some gifts at the shop.</p>
+				<p><strong>Part 1:</strong> TBD</p>
+				<p><strong>Part 2:</strong> TBD</p>
 			</blockquote>
 		</section>
+		<script type="module">
+			import { paperColors, ribbonColors } from '/static/day02-colors.js';
+			import { delay, byId, pickRandom, div } from '/static/utils.js';
+			const { pipe, trim, split, map, filter, length, slice, equals, curry, range, converge, identity } = R;
+
+			// Check if ID is invalid (digits sequence repeated twice: 55, 6464, 123123...)
+			const isInvalidId = pipe(
+				String,
+				str => length(str) % 2 === 0 && equals(slice(0, length(str) / 2, str), slice(length(str) / 2, Infinity, str))
+			);
+
+			// Generate a gift SVG string with label, paper color, ribbon color and optional invalid glow
+			const generateGift = curry((labelNumber, paperColor, ribbonColor, isInvalid) => {
+				const filterDef = isInvalid ? `<defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="0.8" result="blur"/><feFlood flood-color="#ff0000" flood-opacity="0.6"/><feComposite in2="blur" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>` : '';
+				const filterAttr = isInvalid ? ' filter="url(#glow)"' : '';
+				const labelStr = String(labelNumber);
+				const labelWidth = length(labelStr) * 1.0 + 1.2;
+				const labelX = 4 + labelWidth / 2;
+				return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 2 12 12" overflow="visible">${filterDef}<g transform="translate(7, 5)"${filterAttr}><rect x="0" y="1.5" width="6" height="4.5" rx="0.5" fill="${paperColor}"/><rect x="-0.5" y="0.5" width="7" height="1.5" rx="0.5" fill="${paperColor}"/><rect x="2.5" y="0.5" width="1" height="5.5" fill="${ribbonColor}"/><rect x="0" y="3" width="6" height="1" fill="${ribbonColor}"/><ellipse cx="3" cy="0.5" rx="1.2" ry="0.6" fill="${ribbonColor}"/><rect x="4" y="2" width="${labelWidth}" height="2" rx="0.3" fill="#fff" stroke="#999" stroke-width="0.1"/><text x="${labelX}" y="3.5" font-family="Arial" font-size="1.4" fill="#000" text-anchor="middle">${labelNumber}</text></g></svg>`;
+			});
+
+			// Generate a gift with random colors from the palettes
+			const generateRandomGift = (id, isInvalid) => generateGift(id, pickRandom(paperColors), pickRandom(ribbonColors), isInvalid);
+
+			// Parse a range line "123-456" into { start, end }
+			const parseRange = pipe(
+				trim,
+				split('-'),
+				map(Number),
+				([start, end]) => ({ start, end })
+			);
+
+			// Parse all input lines into array of ranges
+			const parseInput = pipe(trim, split('\n'), filter(Boolean), map(parseRange));
+
+			// Create gift element
+			const createGiftElement = pipe(
+				converge(generateRandomGift, [identity, isInvalidId]),
+				innerHTML => div({ className: 'gift', innerHTML })
+			);
+
+			// Create a stack element with gifts from start to end
+			const createStack = (start, end) => {
+				const stack = div({ className: 'gift-stack' });
+				range(start, end + 1).forEach(id => stack.appendChild(createGiftElement(id)));
+				return stack;
+			};
+
+			// Main puzzle runner
+			const runPuzzle = async (inputData, onLineChange) => {
+				const container = byId('stacks-container');
+				const ranges = parseInput(inputData);
+
+				for (const [i, { start, end }] of ranges.entries()) {
+					onLineChange(`${start}-${end}`);
+					container.innerHTML = '';
+					container.appendChild(createStack(start, end));
+					if (i < length(ranges) - 1) await delay(3000);
+				}
+			};
+
+			// Expose to global scope for Datastar
+			window.runPuzzle = runPuzzle;
+		</script>
 	}
 }
