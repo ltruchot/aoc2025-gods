@@ -27,6 +27,12 @@ section {
   margin-top: 16px;
 }
 
+.scan-wrapper {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+}
+
 .gift-stack {
   display: flex;
   flex-direction: column;
@@ -41,4 +47,18 @@ section {
 
 .gift + .gift {
   margin-top: -75px;
+}
+
+/* Elf scanner */
+.elf {
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: -30px;
+  margin-top: 25px;
+}
+
+.elf img {
+  width: 120px;
+  height: auto;
 }

@@ -40,7 +40,7 @@ templ Day2() {
 						data-on:click="
 							$isScanning = true;
 							$status = 'Scanning...';
-							runPuzzle($inputData, (line) => $currentLine = line)
+							runPuzzle($inputData, (line) => $currentLine = line, () => $speed)
 								.then(() => $status = 'Complete')
 								.catch(e => $status = e.message)
 								.finally(() => $isScanning = false);
@@ -69,7 +69,11 @@ templ Day2() {
 		<script type="module">
 			import { paperColors, ribbonColors } from '/static/day02-colors.js';
 			import { delay, byId, pickRandom, div } from '/static/utils.js';
-			const { pipe, trim, split, map, filter, length, slice, equals, curry, range, converge, identity } = R;
+			const { pipe, trim, split, map, filter, length, slice, equals, curry, range, converge, identity, reduce, addIndex } = R;
+
+			// Constants
+			const GIFT_HEIGHT = 75; // Effective height with overlap
+			const ELF_PAUSE_INVALID = 1000; // Pause on invalid gifts (ms)
 
 			// Check if ID is invalid (digits sequence repeated twice: 55, 6464, 123123...)
 			const isInvalidId = pipe(
@@ -107,23 +111,69 @@ templ Day2() {
 				innerHTML => div({ className: 'gift', innerHTML })
 			);
 
-			// Create a stack element with gifts from start to end
-			const createStack = (start, end) => {
+			// Create elf element
+			const createElf = () => {
+				const elf = div({ className: 'elf' });
+				elf.innerHTML = '<img src="/static/img/elf_scanner.svg" alt="Elf scanner"/>';
+				return elf;
+			};
+
+			// Create a stack with gifts and track invalid indices
+			const createStackWithData = (start, end) => {
+				const ids = range(start, end + 1);
+				const invalidIndices = pipe(
+					addIndex(map)((id, idx) => isInvalidId(id) ? idx : -1),
+					filter(idx => idx !== -1)
+				)(ids);
 				const stack = div({ className: 'gift-stack' });
-				range(start, end + 1).forEach(id => stack.appendChild(createGiftElement(id)));
-				return stack;
+				ids.forEach(id => stack.appendChild(createGiftElement(id)));
+				return { stack, invalidIndices, count: length(ids) };
+			};
+
+			// Move elf to position
+			const moveElf = (elf, index, speed) => {
+				elf.style.transition = `top ${speed}ms ease-in-out`;
+				elf.style.top = `${index * GIFT_HEIGHT}px`;
+			};
+
+			// Scan animation with reduce
+			const scanStack = (elf, count, invalidIndices, speed) => {
+				const indices = range(0, count);
+				return reduce(
+					(promise, idx) => promise.then(async () => {
+						moveElf(elf, idx, speed);
+						await delay(speed);
+						if (invalidIndices.includes(idx)) await delay(ELF_PAUSE_INVALID);
+					}),
+					Promise.resolve(),
+					indices
+				);
 			};
 
 			// Main puzzle runner
-			const runPuzzle = async (inputData, onLineChange) => {
+			const runPuzzle = async (inputData, onLineChange, getSpeed) => {
 				const container = byId('stacks-container');
 				const ranges = parseInput(inputData);
 
-				for (const [i, { start, end }] of ranges.entries()) {
+				for (const { start, end } of ranges) {
 					onLineChange(`${start}-${end}`);
 					container.innerHTML = '';
-					container.appendChild(createStack(start, end));
-					if (i < length(ranges) - 1) await delay(3000);
+
+					// Create wrapper, stack and elf
+					const wrapper = div({ className: 'scan-wrapper' });
+					const { stack, invalidIndices, count } = createStackWithData(start, end);
+					const elf = createElf();
+
+					wrapper.appendChild(stack);
+					wrapper.appendChild(elf);
+					container.appendChild(wrapper);
+
+					// Scan animation
+					await scanStack(elf, count, invalidIndices, getSpeed());
+
+					// Reset elf to top
+					moveElf(elf, 0, getSpeed());
+					await delay(getSpeed());
 				}
 			};
 
