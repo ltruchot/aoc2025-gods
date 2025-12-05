@@ -63,3 +63,12 @@ section {
   width: 120px;
   height: auto;
 }
+
+/* Invalid gift glow effect */
+.gift.invalid {
+  filter: drop-shadow(0 0 8px #ff4444) drop-shadow(0 0 4px #ff0000);
+}
+
+.gift.invalid svg text {
+  fill: #cc0000;
+}

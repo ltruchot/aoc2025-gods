@@ -81,19 +81,16 @@ templ Day2() {
 				str => length(str) % 2 === 0 && equals(slice(0, length(str) / 2, str), slice(length(str) / 2, Infinity, str))
 			);
 
-			// Generate a gift SVG string with label, paper color, ribbon color and optional invalid glow
-			const generateGift = curry((labelNumber, paperColor, ribbonColor, isInvalid) => {
-				const filterDef = isInvalid ? `<defs><filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.5" result="blur1"/><feFlood flood-color="#ff4444" flood-opacity="0.8"/><feComposite in2="blur1" operator="in" result="glow1"/><feGaussianBlur in="SourceGraphic" stdDeviation="0.5" result="blur2"/><feFlood flood-color="#ff0000" flood-opacity="0.5"/><feComposite in2="blur2" operator="in" result="glow2"/><feMerge><feMergeNode in="glow1"/><feMergeNode in="glow2"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>` : '';
-				const filterAttr = isInvalid ? ' filter="url(#glow)"' : '';
+			// Generate a gift SVG string with label, paper color, ribbon color
+			const generateGift = curry((labelNumber, paperColor, ribbonColor) => {
 				const labelStr = String(labelNumber);
 				const labelWidth = length(labelStr) * 1.0 + 1.2;
 				const labelX = 4 + labelWidth / 2;
-				const textColor = isInvalid ? '#cc0000' : '#000';
-				return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 2 12 12" overflow="visible">${filterDef}<g transform="translate(7, 5)"${filterAttr}><rect x="0" y="1.5" width="6" height="4.5" rx="0.5" fill="${paperColor}"/><rect x="-0.5" y="0.5" width="7" height="1.5" rx="0.5" fill="${paperColor}"/><rect x="2.5" y="0.5" width="1" height="5.5" fill="${ribbonColor}"/><rect x="0" y="3" width="6" height="1" fill="${ribbonColor}"/><ellipse cx="3" cy="0.5" rx="1.2" ry="0.6" fill="${ribbonColor}"/><rect x="4" y="2" width="${labelWidth}" height="2" rx="0.3" fill="#fff" stroke="#999" stroke-width="0.1"/><text x="${labelX}" y="3.5" font-family="Arial" font-size="1.4" fill="${textColor}" text-anchor="middle">${labelNumber}</text></g></svg>`;
+				return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 2 12 12" overflow="visible"><g transform="translate(7, 5)"><rect x="0" y="1.5" width="6" height="4.5" rx="0.5" fill="${paperColor}"/><rect x="-0.5" y="0.5" width="7" height="1.5" rx="0.5" fill="${paperColor}"/><rect x="2.5" y="0.5" width="1" height="5.5" fill="${ribbonColor}"/><rect x="0" y="3" width="6" height="1" fill="${ribbonColor}"/><ellipse cx="3" cy="0.5" rx="1.2" ry="0.6" fill="${ribbonColor}"/><rect x="4" y="2" width="${labelWidth}" height="2" rx="0.3" fill="#fff" stroke="#999" stroke-width="0.1"/><text x="${labelX}" y="3.5" font-family="Arial" font-size="1.4" fill="#000" text-anchor="middle">${labelNumber}</text></g></svg>`;
 			});
 
 			// Generate a gift with random colors from the palettes
-			const generateRandomGift = (id, isInvalid) => generateGift(id, pickRandom(paperColors), pickRandom(ribbonColors), isInvalid);
+			const generateRandomGift = id => generateGift(id, pickRandom(paperColors), pickRandom(ribbonColors));
 
 			// Parse a range line "123-456" into { start, end }
 			const parseRange = pipe(
@@ -106,8 +103,8 @@ templ Day2() {
 			// Parse all input ranges into array of ranges
 			const parseInput = pipe(trim, split(','), filter(Boolean), map(parseRange));
 
-			// Create gift element (always without glow initially)
-			const createGiftElement = id => div({ className: 'gift', innerHTML: generateRandomGift(id, false) });
+			// Create gift element
+			const createGiftElement = id => div({ className: 'gift', innerHTML: generateRandomGift(id) });
 
 			// Create elf element
 			const createElf = () => {
@@ -152,9 +149,7 @@ templ Day2() {
 			};
 
 			// Activate glow on a gift element
-			const activateGlow = (gift, id) => {
-				gift.innerHTML = generateRandomGift(id, true);
-			};
+			const activateGlow = gift => gift.classList.add('invalid');
 
 			// Scan animation for a chunk - moves to invalid gifts, then to bottom
 			const scanChunk = async (elf, stack, ids, invalidIndices, speed, onInvalidFound) => {
@@ -167,7 +162,7 @@ templ Day2() {
 						moveElf(elf, idx, speed);
 						scrollToGift(stack, idx);
 						await delay(speed);
-						activateGlow(gifts[idx], ids[idx]);
+						activateGlow(gifts[idx]);
 						onInvalidFound(ids[idx]);
 						await delay(speed);
 					}),
