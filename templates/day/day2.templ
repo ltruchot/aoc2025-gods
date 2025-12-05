@@ -5,12 +5,12 @@ import "github.com/ltruchot/aoc2025-gods/templates"
 templ Day2() {
 	@templates.LayoutWithCSS("Day 2 - Gift Shop", "/static/day02.css", "/day/2") {
 		<h2>Day 2: Gift Shop</h2>
-		<section data-signals="{isScanning: false, inputData: '11-22\n95-115\n998-1012\n1188511880-1188511890\n222220-222224\n1698522-1698528\n446443-446449\n38593856-38593862\n565653-565659\n824824821-824824827\n2121212118-2121212124', status: '', currentLine: '', part1Output: '', part2Output: '', speed: 50 }">
+		<section data-signals="{isScanning: false, inputData: '11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124', status: '', invalidFound: '', part1Output: 0, part2Output: '', speed: 500 }">
 			<h3>Part 1 & 2</h3>
 			<!-- Range control for the scan speed -->
 			<div class="row speed-control">
 				<span>Scan speed</span>
-				<input type="range" min="1" max="200" data-bind:speed/>
+				<input type="range" min="10" max="1000" data-bind:speed/>
 				<output class="speed-left" data-text="$speed + 'ms'"></output>
 			</div>
 			<!-- Controls -->
@@ -25,8 +25,8 @@ templ Day2() {
 					data-bind:input-data
 				></textarea>
 				<div class="row stats">
-					<span class="label">Current:</span>
-					<output class="small" data-text="$currentLine"></output>
+					<span class="label">Invalid found:</span>
+					<output class="small" data-text="$invalidFound"></output>
 					<span class="label">Part 1:</span>
 					<output data-text="$part1Output"></output>
 					<span class="label">Part 2:</span>
@@ -40,7 +40,7 @@ templ Day2() {
 						data-on:click="
 							$isScanning = true;
 							$status = 'Scanning...';
-							runPuzzle($inputData, (line) => $currentLine = line, () => $speed)
+							runPuzzle($inputData, (id) => { $invalidFound = id; $part1Output += id; }, () => $speed)
 								.then(() => $status = 'Complete')
 								.catch(e => $status = e.message)
 								.finally(() => $isScanning = false);
@@ -51,7 +51,7 @@ templ Day2() {
 					<button
 						class="reset"
 						data-attr:disabled="$isScanning"
-						data-on:click="$inputData = '11-22\n95-115\n998-1012\n1188511880-1188511890\n222220-222224\n1698522-1698528\n446443-446449\n38593856-38593862\n565653-565659\n824824821-824824827\n2121212118-2121212124'; $currentLine = ''; $part1Output = ''; $part2Output = ''; $status = ''; $speed = 50; document.getElementById('stacks-container').innerHTML = ''"
+						data-on:click="$inputData = '11-22,95-115,998-1012,1188511880-1188511890,222220-222224,1698522-1698528,446443-446449,38593856-38593862,565653-565659,824824821-824824827,2121212118-2121212124'; $invalidFound = ''; $part1Output = 0; $part2Output = ''; $status = ''; $speed = 500; document.getElementById('stacks-container').innerHTML = ''"
 					>
 						Reset
 					</button>
@@ -73,7 +73,7 @@ templ Day2() {
 
 			// Constants
 			const GIFT_HEIGHT = 75; // Effective height with overlap
-			const ELF_PAUSE_INVALID = 1000; // Pause on invalid gifts (ms)
+			const CHUNK_SIZE = 1000; // Process gifts in chunks of 1000
 
 			// Check if ID is invalid (digits sequence repeated twice: 55, 6464, 123123...)
 			const isInvalidId = pipe(
@@ -83,12 +83,13 @@ templ Day2() {
 
 			// Generate a gift SVG string with label, paper color, ribbon color and optional invalid glow
 			const generateGift = curry((labelNumber, paperColor, ribbonColor, isInvalid) => {
-				const filterDef = isInvalid ? `<defs><filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="0.8" result="blur"/><feFlood flood-color="#ff0000" flood-opacity="0.6"/><feComposite in2="blur" operator="in"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>` : '';
+				const filterDef = isInvalid ? `<defs><filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="1.5" result="blur1"/><feFlood flood-color="#ff4444" flood-opacity="0.8"/><feComposite in2="blur1" operator="in" result="glow1"/><feGaussianBlur in="SourceGraphic" stdDeviation="0.5" result="blur2"/><feFlood flood-color="#ff0000" flood-opacity="0.5"/><feComposite in2="blur2" operator="in" result="glow2"/><feMerge><feMergeNode in="glow1"/><feMergeNode in="glow2"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>` : '';
 				const filterAttr = isInvalid ? ' filter="url(#glow)"' : '';
 				const labelStr = String(labelNumber);
 				const labelWidth = length(labelStr) * 1.0 + 1.2;
 				const labelX = 4 + labelWidth / 2;
-				return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 2 12 12" overflow="visible">${filterDef}<g transform="translate(7, 5)"${filterAttr}><rect x="0" y="1.5" width="6" height="4.5" rx="0.5" fill="${paperColor}"/><rect x="-0.5" y="0.5" width="7" height="1.5" rx="0.5" fill="${paperColor}"/><rect x="2.5" y="0.5" width="1" height="5.5" fill="${ribbonColor}"/><rect x="0" y="3" width="6" height="1" fill="${ribbonColor}"/><ellipse cx="3" cy="0.5" rx="1.2" ry="0.6" fill="${ribbonColor}"/><rect x="4" y="2" width="${labelWidth}" height="2" rx="0.3" fill="#fff" stroke="#999" stroke-width="0.1"/><text x="${labelX}" y="3.5" font-family="Arial" font-size="1.4" fill="#000" text-anchor="middle">${labelNumber}</text></g></svg>`;
+				const textColor = isInvalid ? '#cc0000' : '#000';
+				return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 2 12 12" overflow="visible">${filterDef}<g transform="translate(7, 5)"${filterAttr}><rect x="0" y="1.5" width="6" height="4.5" rx="0.5" fill="${paperColor}"/><rect x="-0.5" y="0.5" width="7" height="1.5" rx="0.5" fill="${paperColor}"/><rect x="2.5" y="0.5" width="1" height="5.5" fill="${ribbonColor}"/><rect x="0" y="3" width="6" height="1" fill="${ribbonColor}"/><ellipse cx="3" cy="0.5" rx="1.2" ry="0.6" fill="${ribbonColor}"/><rect x="4" y="2" width="${labelWidth}" height="2" rx="0.3" fill="#fff" stroke="#999" stroke-width="0.1"/><text x="${labelX}" y="3.5" font-family="Arial" font-size="1.4" fill="${textColor}" text-anchor="middle">${labelNumber}</text></g></svg>`;
 			});
 
 			// Generate a gift with random colors from the palettes
@@ -102,14 +103,11 @@ templ Day2() {
 				([start, end]) => ({ start, end })
 			);
 
-			// Parse all input lines into array of ranges
-			const parseInput = pipe(trim, split('\n'), filter(Boolean), map(parseRange));
+			// Parse all input ranges into array of ranges
+			const parseInput = pipe(trim, split(','), filter(Boolean), map(parseRange));
 
-			// Create gift element
-			const createGiftElement = pipe(
-				converge(generateRandomGift, [identity, isInvalidId]),
-				innerHTML => div({ className: 'gift', innerHTML })
-			);
+			// Create gift element (always without glow initially)
+			const createGiftElement = id => div({ className: 'gift', innerHTML: generateRandomGift(id, false) });
 
 			// Create elf element
 			const createElf = () => {
@@ -118,8 +116,17 @@ templ Day2() {
 				return elf;
 			};
 
-			// Create a stack with gifts and track invalid indices
-			const createStackWithData = (start, end) => {
+			// Split a range into chunks of CHUNK_SIZE
+			const splitIntoChunks = (start, end) => {
+				const chunks = [];
+				for (let i = start; i <= end; i += CHUNK_SIZE) {
+					chunks.push({ start: i, end: Math.min(i + CHUNK_SIZE - 1, end) });
+				}
+				return chunks;
+			};
+
+			// Create a stack with all gifts for a chunk and track invalid indices
+			const createChunkStack = (start, end) => {
 				const ids = range(start, end + 1);
 				const invalidIndices = pipe(
 					addIndex(map)((id, idx) => isInvalidId(id) ? idx : -1),
@@ -127,7 +134,7 @@ templ Day2() {
 				)(ids);
 				const stack = div({ className: 'gift-stack' });
 				ids.forEach(id => stack.appendChild(createGiftElement(id)));
-				return { stack, invalidIndices, count: length(ids) };
+				return { stack, invalidIndices, ids };
 			};
 
 			// Move elf to position
@@ -136,44 +143,77 @@ templ Day2() {
 				elf.style.top = `${index * GIFT_HEIGHT}px`;
 			};
 
-			// Scan animation with reduce
-			const scanStack = (elf, count, invalidIndices, speed) => {
-				const indices = range(0, count);
-				return reduce(
+			// Scroll to gift at index in stack
+			const scrollToGift = (stack, index) => {
+				const gift = stack.children[index];
+				if (gift) {
+					gift.scrollIntoView({ behavior: 'smooth', block: 'center' });
+				}
+			};
+
+			// Activate glow on a gift element
+			const activateGlow = (gift, id) => {
+				gift.innerHTML = generateRandomGift(id, true);
+			};
+
+			// Scan animation for a chunk - moves to invalid gifts, then to bottom
+			const scanChunk = async (elf, stack, ids, invalidIndices, speed, onInvalidFound) => {
+				const gifts = [...stack.children];
+				const lastIdx = length(ids) - 1;
+
+				// Process each invalid gift: move (speed) -> glow -> pause (speed)
+				await reduce(
 					(promise, idx) => promise.then(async () => {
 						moveElf(elf, idx, speed);
+						scrollToGift(stack, idx);
 						await delay(speed);
-						if (invalidIndices.includes(idx)) await delay(ELF_PAUSE_INVALID);
+						activateGlow(gifts[idx], ids[idx]);
+						onInvalidFound(ids[idx]);
+						await delay(speed);
 					}),
 					Promise.resolve(),
-					indices
+					invalidIndices
 				);
+
+				// Animate to bottom
+				const lastInvalid = invalidIndices[length(invalidIndices) - 1];
+				if (lastInvalid !== lastIdx) {
+					moveElf(elf, lastIdx, speed);
+					scrollToGift(stack, lastIdx);
+					await delay(speed);
+				}
 			};
 
 			// Main puzzle runner
-			const runPuzzle = async (inputData, onLineChange, getSpeed) => {
+			const runPuzzle = async (inputData, onInvalidFound, getSpeed) => {
 				const container = byId('stacks-container');
 				const ranges = parseInput(inputData);
 
 				for (const { start, end } of ranges) {
-					onLineChange(`${start}-${end}`);
-					container.innerHTML = '';
+					// Split range into chunks of 1000
+					const chunks = splitIntoChunks(start, end);
 
-					// Create wrapper, stack and elf
-					const wrapper = div({ className: 'scan-wrapper' });
-					const { stack, invalidIndices, count } = createStackWithData(start, end);
-					const elf = createElf();
+					for (const chunk of chunks) {
+						container.innerHTML = '';
 
-					wrapper.appendChild(stack);
-					wrapper.appendChild(elf);
-					container.appendChild(wrapper);
+						// Create stack for this chunk
+						const { stack, invalidIndices, ids } = createChunkStack(chunk.start, chunk.end);
 
-					// Scan animation
-					await scanStack(elf, count, invalidIndices, getSpeed());
+						// Create wrapper and elf
+						const wrapper = div({ className: 'scan-wrapper' });
+						const elf = createElf();
 
-					// Reset elf to top
-					moveElf(elf, 0, getSpeed());
-					await delay(getSpeed());
+						wrapper.appendChild(stack);
+						wrapper.appendChild(elf);
+						container.appendChild(wrapper);
+
+						// Reset elf to top before starting
+						moveElf(elf, 0, 0);
+						await delay(10);
+
+						// Scan animation for this chunk
+						await scanChunk(elf, stack, ids, invalidIndices, getSpeed(), onInvalidFound);
+					}
 				}
 			};
 
