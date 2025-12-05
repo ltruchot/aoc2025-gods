@@ -16,6 +16,6 @@ templ Day(dayNum int) {
 				<output id="part2" data-text="$part2Output"></output>
 			</section>
 		</div>
-		<script type="module" src={ fmt.Sprintf("/static/day%02d.js", dayNum) }></script>
+		<script type="module" src={ fmt.Sprintf("/static/day%02d.js?v=%s", dayNum, templates.Version) }></script>
 	}
 }

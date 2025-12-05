@@ -7,15 +7,20 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/ltruchot/aoc2025-gods/internal/handler"
+	"github.com/ltruchot/aoc2025-gods/templates"
 )
 
 // Version is set at build time via -ldflags
 var Version = "dev"
 
 // cacheStatic wraps a handler to add cache headers for static assets
-func cacheStatic(next http.Handler) http.Handler {
+func cacheStatic(next http.Handler, version string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		if version == "dev" {
+			w.Header().Set("Cache-Control", "no-cache")
+		} else {
+			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		}
 		next.ServeHTTP(w, r)
 	})
 }
@@ -25,13 +30,14 @@ func main() {
 		log.Println("No .env file found")
 	}
 
+	templates.Version = Version
 	h := handler.New(Version)
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /", h.Index)
 	mux.HandleFunc("GET /day/{day}", h.Day)
 	mux.HandleFunc("GET /adventofcode/2025/day/{day}/input", h.AoCInput)
-	mux.Handle("GET /static/", cacheStatic(http.StripPrefix("/static/", http.FileServer(http.Dir("static")))))
+	mux.Handle("GET /static/", cacheStatic(http.StripPrefix("/static/", http.FileServer(http.Dir("static"))), Version))
 
 	port := os.Getenv("PORT")
 	if port == "" {

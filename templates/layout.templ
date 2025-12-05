@@ -2,6 +2,8 @@ package templates
 
 import "strconv"
 
+var Version = "dev"
+
 templ Layout(title string, currentPath string) {
 	@LayoutWithCSS(title, "", currentPath) {
 		{ children... }
@@ -17,10 +19,10 @@ templ LayoutWithCSS(title string, css string, currentPath string) {
 			<title>{ title } - AoC 2025</title>
 			<script type="module" src="https://cdn.jsdelivr.net/gh/starfederation/datastar@1.0.0-RC.6/bundles/datastar.js"></script>
 			<script src="https://cdn.jsdelivr.net/npm/ramda@0.32.0/dist/ramda.min.js"></script>
-			<script src="/static/utils.js"></script>
-			<link rel="stylesheet" href="/static/common.css"/>
+			<script src={ "/static/utils.js?v=" + Version }></script>
+			<link rel="stylesheet" href={ "/static/common.css?v=" + Version }/>
 			if css != "" {
-				<link rel="stylesheet" href={ css }/>
+				<link rel="stylesheet" href={ css + "?v=" + Version }/>
 			}
 			<style>
 				@view-transition { navigation: auto; }
