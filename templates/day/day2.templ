@@ -69,7 +69,7 @@ templ Day2() {
 		<script src="/static/day02-colors.js"></script>
 		<script>
 			const { delay, byId, pickRandom, div } = U;
-			const { pipe, trim, split, map, filter, length, slice, equals, curry, range, converge, identity, reduce, addIndex } = R;
+			const { pipe, trim, split, map, filter, length, slice, equals, curry, range, reduce, addIndex, unfold } = R;
 
 			// Constants
 			const GIFT_HEIGHT = 75; // Effective height with overlap
@@ -82,12 +82,12 @@ templ Day2() {
 			);
 
 			// Generate a gift SVG string with label, paper color, ribbon color
-			const generateGift = curry((labelNumber, paperColor, ribbonColor) => {
+			const generateGift = (labelNumber, paperColor, ribbonColor) => {
 				const labelStr = String(labelNumber);
 				const labelWidth = length(labelStr) * 1.0 + 1.2;
 				const labelX = 4 + labelWidth / 2;
 				return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 2 12 12" overflow="visible"><g transform="translate(7, 5)"><rect x="0" y="1.5" width="6" height="4.5" rx="0.5" fill="${paperColor}"/><rect x="-0.5" y="0.5" width="7" height="1.5" rx="0.5" fill="${paperColor}"/><rect x="2.5" y="0.5" width="1" height="5.5" fill="${ribbonColor}"/><rect x="0" y="3" width="6" height="1" fill="${ribbonColor}"/><ellipse cx="3" cy="0.5" rx="1.2" ry="0.6" fill="${ribbonColor}"/><rect class="label-bg" x="4" y="2" width="${labelWidth}" height="2" rx="0.3"/><text x="${labelX}" y="3.5">${labelNumber}</text></g></svg>`;
-			});
+			};
 
 			// Generate a gift with random colors from the palettes
 			const generateRandomGift = id => generateGift(id, pickRandom(paperColors), pickRandom(ribbonColors));
@@ -107,28 +107,18 @@ templ Day2() {
 			const createGiftElement = id => div({ className: 'gift', innerHTML: generateRandomGift(id) });
 
 			// Create elf element
-			const createElf = () => {
-				const elf = div({ className: 'elf' });
-				elf.innerHTML = '<img src="/static/img/elf_scanner.svg" alt="Elf scanner"/>';
-				return elf;
-			};
+			const createElf = () => div({ className: 'elf', innerHTML: '<img src="/static/img/elf_scanner.svg" alt="Elf scanner"/>' });
 
 			// Split a range into chunks of CHUNK_SIZE
-			const splitIntoChunks = (start, end) => {
-				const chunks = [];
-				for (let i = start; i <= end; i += CHUNK_SIZE) {
-					chunks.push({ start: i, end: Math.min(i + CHUNK_SIZE - 1, end) });
-				}
-				return chunks;
-			};
+			const splitIntoChunks = (start, end) => unfold(
+				i => i > end ? false : [{ start: i, end: Math.min(i + CHUNK_SIZE - 1, end) }, i + CHUNK_SIZE],
+				start
+			);
 
 			// Create a stack with all gifts for a chunk and track invalid indices
 			const createChunkStack = (start, end) => {
 				const ids = range(start, end + 1);
-				const invalidIndices = pipe(
-					addIndex(map)((id, idx) => isInvalidId(id) ? idx : -1),
-					filter(idx => idx !== -1)
-				)(ids);
+				const invalidIndices = addIndex(reduce)((acc, id, idx) => isInvalidId(id) ? [...acc, idx] : acc, [])(ids);
 				const stack = div({ className: 'gift-stack' });
 				ids.forEach(id => stack.appendChild(createGiftElement(id)));
 				return { stack, invalidIndices, ids };
